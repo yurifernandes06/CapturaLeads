@@ -5,6 +5,7 @@ import { OPEN_STAGES } from "@/lib/leads";
 import { SLA_KIND_LABEL, type SlaConfig } from "@/lib/sla/config";
 import { evaluateSla } from "@/lib/sla/engine";
 import { getSetting } from "@/server/settings";
+import { sendSlaAlert } from "@/server/whatsapp/service";
 
 /**
  * Orquestra o motor de SLA: materializa o resultado no lead (para filtrar e
@@ -30,10 +31,10 @@ export async function refreshLeadSla(leadId: string, config?: SlaConfig) {
   const cfg = config ?? (await getSetting("sla"));
   const patch = slaPatch(lead, cfg, new Date());
   if (changed(lead, patch)) await db.update(schema.leads).set(patch).where(eq(schema.leads.id, leadId));
-  if (patch.slaStatus === "breached") await notifyBreach({ ...lead, ...patch });
+  if (patch.slaStatus === "breached") await notifyBreach({ ...lead, ...patch }, cfg);
 }
 
-async function notifyBreach(lead: schema.Lead) {
+async function notifyBreach(lead: schema.Lead, config: SlaConfig) {
   // Um alerta por ciclo: se já avisamos depois que este prazo começou, não repete.
   if (lead.slaNotifiedAt && lead.slaStartedAt && lead.slaNotifiedAt >= lead.slaStartedAt) return;
   const now = new Date();
@@ -70,6 +71,10 @@ async function notifyBreach(lead: schema.Lead) {
       })),
     );
   }
+
+  if (config.whatsappAlerts) {
+    await sendSlaAlert(lead).catch((err) => console.error("[sla] alerta no WhatsApp falhou", err));
+  }
 }
 
 let sweeping: Promise<{ updated: number; breached: number }> | null = null;
@@ -92,7 +97,7 @@ export function sweepSla() {
         }
         if (patch.slaStatus === "breached") {
           breached++;
-          await notifyBreach({ ...lead, ...patch });
+          await notifyBreach({ ...lead, ...patch }, config);
         }
       }
       // Faxina: sessões expiradas.
