@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (!validKey(request)) return json({ error: "API key inválida." }, 401);
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  if (!rateLimit(`api:${ip}`, 60, 60_000).ok) return json({ error: "Muitas requisições." }, 429);
+  if (!(await rateLimit(`api:${ip}`, 60, 60_000)).ok) return json({ error: "Muitas requisições." }, 429);
 
   const body = await request.json().catch(() => null);
   const parsed = captureSchema.safeParse(body);

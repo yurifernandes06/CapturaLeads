@@ -33,6 +33,10 @@ const schema = z.object({
   EVOLUTION_INSTANCE: z.string().optional(),
   /** Token exigido na query (?token=) do webhook quando o provedor não assina o payload. */
   WHATSAPP_WEBHOOK_TOKEN: z.string().optional(),
+
+  /** Opcional: rate limit compartilhado entre instâncias (Upstash Redis REST). */
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
