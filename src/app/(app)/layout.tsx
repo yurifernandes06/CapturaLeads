@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/app/mobile-nav";
-import { NavLinks } from "@/components/app/nav";
+import { NavLinks, NavLinksFallback } from "@/components/app/nav";
 import { UserMenu } from "@/components/app/user-menu";
 import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +19,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         <Link href="/dashboard" className="mb-6 px-2 pt-1.5">
           <Logo className="text-sidebar-accent-foreground" />
         </Link>
-        <NavLinks />
+        <Suspense fallback={<NavLinksFallback />}>
+          <NavLinks />
+        </Suspense>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import { validateSession } from "./session";
 
@@ -15,6 +16,9 @@ export type CurrentUser = {
 };
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  // Marca a renderização como request-time: daqui em diante é seguro ler o relógio
+  // (Date.now/new Date), exigência do Cache Components.
+  await connection();
   const user = await validateSession();
   if (!user) return null;
   return { id: user.id, name: user.name, email: user.email, role: user.role };
