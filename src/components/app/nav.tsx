@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboardIcon, SettingsIcon, type LucideIcon } from "lucide-react";
+import { KanbanSquareIcon, LayoutDashboardIcon, SettingsIcon, UsersRoundIcon, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -9,11 +9,22 @@ export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+  { href: "/leads", label: "Leads", icon: UsersRoundIcon },
+  { href: "/pipeline", label: "Pipeline", icon: KanbanSquareIcon },
   { href: "/settings", label: "Configurações", icon: SettingsIcon },
 ];
 
 export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  return <NavList pathname={pathname} onNavigate={onNavigate} />;
+}
+
+/** Fallback sem estado ativo, usado no static shell enquanto a URL não é conhecida. */
+export function NavLinksFallback() {
+  return <NavList pathname="" />;
+}
+
+function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (
     <nav className="grid gap-0.5">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
