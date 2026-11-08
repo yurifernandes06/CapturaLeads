@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isActiveFormSlug } from "@/server/forms";
 
 /**
  * Checagem otimista: só olha se o cookie existe. A validação real da sessão
@@ -7,8 +8,17 @@ import { NextResponse, type NextRequest } from "next/server";
 const SESSION_COOKIE = "cl_session";
 const PUBLIC_PREFIXES = ["/login", "/f/", "/api/public", "/api/webhooks", "/api/cron"];
 
-export function proxy(request: NextRequest) {
+const FORM_PAGE = /^\/f\/([^/]+)\/?$/;
+
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // A página do formulário faz streaming; notFound() lá dentro sairia com status 200.
+  const formSlug = request.method === "GET" ? FORM_PAGE.exec(pathname)?.[1] : undefined;
+  if (formSlug && !(await isActiveFormSlug(decodeURIComponent(formSlug)))) {
+    return NextResponse.rewrite(new URL("/_form-not-found", request.url), { status: 404 });
+  }
+
   const hasSession = request.cookies.has(SESSION_COOKIE);
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 
