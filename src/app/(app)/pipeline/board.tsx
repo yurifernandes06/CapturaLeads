@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { PriorityBadge, WhatsAppIcon } from "@/components/leads/badges";
+import { LostReasonDialog } from "@/components/leads/lost-reason-dialog";
 import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { formatCurrency, formatDuration } from "@/lib/format";
 import { STAGES, STAGE_META, type Priority, type Stage } from "@/lib/leads";
@@ -37,21 +38,34 @@ export function Board({ leads }: { leads: BoardLead[] }) {
   );
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<Stage | null>(null);
+  // Soltar em "Perdido" só move depois que o motivo for escolhido; cancelar deixa o card onde estava.
+  const [losing, setLosing] = useState<BoardLead | null>(null);
 
-  const move = (id: string, stage: Stage) => {
+  const move = (id: string, stage: Stage, lostReason?: string) => {
     const lead = optimistic.find((l) => l.id === id);
     if (!lead || lead.stage === stage) return;
+    if (stage === "lost" && !lostReason) {
+      setLosing(lead);
+      return;
+    }
     startTransition(async () => {
       applyMove({ id, stage });
-      // Perda pede motivo: no quadro usamos o padrão e o vendedor ajusta no detalhe.
-      const res = await moveStageAction(id, stage, stage === "lost" ? "Outro" : undefined);
+      const res = await moveStageAction(id, stage, lostReason);
       if (!res.ok) toast.error(res.error);
       else if (stage === "won") toast.success(`${lead.name}: venda ganha! 🎉`);
+      else if (stage === "lost") toast(`${lead.name} marcado como perdido (${lostReason}).`);
     });
   };
 
   return (
     <div className="-mx-4 flex flex-1 snap-x gap-3 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6">
+      <LostReasonDialog
+        key={losing?.id}
+        open={Boolean(losing)}
+        leadName={losing?.name}
+        onOpenChange={(open) => !open && setLosing(null)}
+        onConfirm={(reason) => losing && move(losing.id, "lost", reason)}
+      />
       {STAGES.map((stage) => {
         const items = optimistic.filter((l) => l.stage === stage);
         const total = items.reduce((sum, l) => sum + l.value, 0);

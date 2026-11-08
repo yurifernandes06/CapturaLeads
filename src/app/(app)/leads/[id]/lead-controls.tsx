@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { StageBadge } from "@/components/leads/badges";
+import { LostReasonDialog } from "@/components/leads/lost-reason-dialog";
 import { LeadFormFields, type LeadFormDefaults } from "@/components/leads/lead-form-fields";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +22,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { ActionResult } from "@/lib/action-result";
-import { LOST_REASONS, OPEN_STAGES, STAGES, type Stage } from "@/lib/leads";
+import { OPEN_STAGES, STAGES, type Stage } from "@/lib/leads";
 import { assignOwnerAction, deleteLeadAction, moveStageAction, updateLeadAction } from "../actions";
 
 function useAction() {
@@ -41,7 +41,6 @@ function useAction() {
 export function StageControl({ leadId, stage }: { leadId: string; stage: Stage }) {
   const { pending, run } = useAction();
   const [lostOpen, setLostOpen] = useState(false);
-  const [reason, setReason] = useState<string>(LOST_REASONS[0]);
   const closed = stage === "won" || stage === "lost";
 
   return (
@@ -87,34 +86,12 @@ export function StageControl({ leadId, stage }: { leadId: string; stage: Stage }
         </Button>
       )}
 
-      <Dialog open={lostOpen} onOpenChange={setLostOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Marcar como perdido</DialogTitle>
-            <DialogDescription>O motivo alimenta os relatórios de perda.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2">
-            <Label htmlFor="lost-reason">Motivo</Label>
-            <NativeSelect id="lost-reason" value={reason} onChange={(e) => setReason(e.target.value)}>
-              {LOST_REASONS.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </NativeSelect>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="destructive"
-              disabled={pending}
-              onClick={() => {
-                setLostOpen(false);
-                run(() => moveStageAction(leadId, "lost", reason), "Lead marcado como perdido.");
-              }}
-            >
-              Confirmar perda
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LostReasonDialog
+        open={lostOpen}
+        onOpenChange={setLostOpen}
+        pending={pending}
+        onConfirm={(reason) => run(() => moveStageAction(leadId, "lost", reason), "Lead marcado como perdido.")}
+      />
     </div>
   );
 }
