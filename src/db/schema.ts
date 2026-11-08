@@ -74,6 +74,7 @@ export const leads = sqliteTable(
     utmSource: text("utm_source"),
     utmMedium: text("utm_medium"),
     utmCampaign: text("utm_campaign"),
+    formId: text("form_id"),
     /** Marcos de contato usados pelo motor de SLA. */
     firstResponseAt: timestamp("first_response_at"),
     lastInboundAt: timestamp("last_inbound_at"),
@@ -139,3 +140,24 @@ export const notifications = sqliteTable(
 );
 
 export type Notification = typeof notifications.$inferSelect;
+
+export const forms = sqliteTable("forms", {
+  id: id(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  buttonText: text("button_text").notNull().default("Quero ser atendido"),
+  successMessage: text("success_message").notNull().default("Recebemos seu contato! Em instantes falamos com você no WhatsApp."),
+  priority: text("priority", { enum: PRIORITIES }).notNull().default("medium"),
+  tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+  /** Mensagem automática de boas-vindas no WhatsApp (vazio = não envia). */
+  welcomeMessage: text("welcome_message"),
+  askEmail: integer("ask_email", { mode: "boolean" }).notNull().default(true),
+  askCompany: integer("ask_company", { mode: "boolean" }).notNull().default(false),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  submissions: integer("submissions").notNull().default(0),
+  createdAt: createdAt(),
+});
+
+export type Form = typeof forms.$inferSelect;

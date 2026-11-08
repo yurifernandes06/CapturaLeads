@@ -67,7 +67,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
               <TableRow className="bg-muted/40 hover:bg-muted/40">
                 <TableHead className="pl-4">Lead</TableHead>
                 <TableHead className="hidden md:table-cell">Contato</TableHead>
-                <TableHead>Etapa</TableHead>
+                <TableHead className="hidden sm:table-cell">Etapa</TableHead>
                 <TableHead>SLA</TableHead>
                 <TableHead className="hidden lg:table-cell">Origem</TableHead>
                 <TableHead className="hidden lg:table-cell">Responsável</TableHead>
@@ -102,7 +102,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
                       <span className="text-sm text-muted-foreground">{lead.email ?? "—"}</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <StageBadge stage={lead.stage} />
                   </TableCell>
                   <TableCell>
