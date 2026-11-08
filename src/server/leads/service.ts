@@ -24,6 +24,7 @@ export type NewLeadInput = {
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
+  formId?: string | null;
 };
 
 export async function findLeadByPhone(phone: string) {
@@ -92,6 +93,7 @@ export async function createLead(
       utmSource: input.utmSource ?? null,
       utmMedium: input.utmMedium ?? null,
       utmCampaign: input.utmCampaign ?? null,
+      formId: input.formId ?? null,
       lastInboundAt: opts.inbound ? now : null,
       createdAt: now,
     })
@@ -125,6 +127,8 @@ export async function recordActivity(
     meta?: Record<string, unknown>;
     inbound?: boolean;
     at?: Date;
+    /** Mensagem automática: entra no histórico mas não conta como contato humano no SLA. */
+    automated?: boolean;
   } = {},
 ) {
   const at = opts.at ?? new Date();
@@ -134,7 +138,8 @@ export async function recordActivity(
     .returning();
 
   const patch: Partial<schema.Lead> = {};
-  if (OUTBOUND_ACTIVITIES.includes(type)) {
+  const humanOutbound = OUTBOUND_ACTIVITIES.includes(type) && !opts.automated;
+  if (humanOutbound) {
     patch.lastOutboundAt = at;
     patch.lastActivityAt = at;
   }
@@ -144,7 +149,7 @@ export async function recordActivity(
   if (Object.keys(patch).length) {
     await db.update(schema.leads).set(patch).where(eq(schema.leads.id, leadId));
   }
-  if (OUTBOUND_ACTIVITIES.includes(type)) {
+  if (humanOutbound) {
     await db
       .update(schema.leads)
       .set({ firstResponseAt: at })
