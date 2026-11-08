@@ -17,15 +17,22 @@ import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { getLead, listOwners } from "@/server/leads/queries";
 import { getSetting } from "@/server/settings";
+import { whatsapp } from "@/server/whatsapp";
 import { ActivityComposer } from "./activity-composer";
 import { DeleteLeadButton, EditLeadButton, OwnerSelect, StageControl } from "./lead-controls";
+import { WhatsAppComposer } from "./whatsapp-composer";
 
 export const metadata: Metadata = { title: "Lead" };
 
 export default async function LeadPage(props: PageProps<"/leads/[id]">) {
   const user = await requireUser();
   const { id } = await props.params;
-  const [data, owners, slaConfig] = await Promise.all([getLead(id), listOwners(), getSetting("sla")]);
+  const [data, owners, slaConfig, templates] = await Promise.all([
+    getLead(id),
+    listOwners(),
+    getSetting("sla"),
+    getSetting("whatsappTemplates"),
+  ]);
   if (!data) notFound();
 
   const { lead, ownerName, activities } = data;
@@ -85,7 +92,25 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="grid gap-6" aria-label="Atividades">
-          <ActivityComposer leadId={lead.id} />
+          <ActivityComposer
+            leadId={lead.id}
+            extraTabs={[
+              {
+                id: "whatsapp",
+                label: "WhatsApp",
+                icon: <WhatsAppIcon />,
+                content: (
+                  <WhatsAppComposer
+                    leadId={lead.id}
+                    hasPhone={Boolean(lead.phone)}
+                    templates={templates}
+                    vars={{ nome: lead.name, empresa: lead.company, vendedor: ownerName ?? user.name }}
+                    providerLabel={whatsapp().label}
+                  />
+                ),
+              },
+            ]}
+          />
           <Card>
             <CardHeader>
               <CardTitle>Histórico</CardTitle>

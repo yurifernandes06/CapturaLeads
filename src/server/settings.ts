@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { z } from "zod";
 import { db, schema } from "@/db";
 import { DEFAULT_SLA_CONFIG, slaConfigSchema } from "@/lib/sla/config";
+import { DEFAULT_TEMPLATES, templatesSchema } from "@/lib/templates";
 
 /**
  * Configurações tipadas guardadas na tabela `settings`. Cada chave tem um
@@ -10,24 +11,15 @@ import { DEFAULT_SLA_CONFIG, slaConfigSchema } from "@/lib/sla/config";
  */
 const REGISTRY = {
   sla: { schema: slaConfigSchema, fallback: DEFAULT_SLA_CONFIG },
+  whatsappTemplates: { schema: templatesSchema, fallback: DEFAULT_TEMPLATES },
 } satisfies Record<string, { schema: z.ZodType; fallback: unknown }>;
 
 type Registry = typeof REGISTRY;
 export type SettingKey = keyof Registry;
 export type SettingValue<K extends SettingKey> = z.infer<Registry[K]["schema"]>;
 
-/** Permite que outras features registrem suas chaves sem acoplar este módulo a elas. */
-const extra = new Map<string, { schema: z.ZodType; fallback: unknown }>();
-export function registerSetting<T>(key: string, def: { schema: z.ZodType<T>; fallback: T }) {
-  extra.set(key, def);
-  return {
-    get: () => getRawSetting(key) as Promise<T>,
-    set: (value: T) => setRawSetting(key, value),
-  };
-}
-
 function definition(key: string) {
-  const def = (REGISTRY as Record<string, { schema: z.ZodType; fallback: unknown }>)[key] ?? extra.get(key);
+  const def = (REGISTRY as Record<string, { schema: z.ZodType; fallback: unknown }>)[key];
   if (!def) throw new Error(`Configuração desconhecida: ${key}`);
   return def;
 }
