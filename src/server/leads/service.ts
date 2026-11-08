@@ -3,6 +3,7 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { OUTBOUND_ACTIVITIES, isClosedStage, type ActivityType, type Priority, type Source, type Stage } from "@/lib/leads";
 import { normalizePhone, phoneVariants } from "@/lib/phone";
+import { refreshLeadSla } from "@/server/sla/service";
 
 /**
  * Regras de escrita de leads. Todo canal (tela, formulário, API, WhatsApp)
@@ -105,6 +106,7 @@ export async function createLead(
     createdAt: now,
   });
 
+  await refreshLeadSla(lead!.id);
   return { lead: lead!, created: true };
 }
 
@@ -148,6 +150,7 @@ export async function recordActivity(
       .set({ firstResponseAt: at })
       .where(and(eq(schema.leads.id, leadId), sql`${schema.leads.firstResponseAt} is null`));
   }
+  await refreshLeadSla(leadId);
   return activity!;
 }
 
