@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { PriorityBadge, WhatsAppIcon } from "@/components/leads/badges";
+import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { formatCurrency, formatDuration } from "@/lib/format";
 import { STAGES, STAGE_META, type Priority, type Stage } from "@/lib/leads";
 import { whatsappLink } from "@/lib/phone";
+import type { SlaKind, SlaStatus } from "@/lib/sla/config";
 import { cn } from "@/lib/utils";
 import { moveStageAction } from "../leads/actions";
 
@@ -21,6 +23,9 @@ export type BoardLead = {
   phone: string | null;
   ageMs: number;
   idleMs: number;
+  slaStatus: SlaStatus;
+  slaKind: SlaKind | null;
+  slaDueAt: string | null;
 };
 
 type Move = { id: string; stage: Stage };
@@ -118,9 +123,12 @@ export function Board({ leads }: { leads: BoardLead[] }) {
                       ) : null}
                     </div>
                   </div>
-                  <p className="mt-2 text-[11px] text-muted-foreground/80">
-                    Parado há {formatDuration(lead.idleMs / 60000)}
-                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground/80">Parado há {formatDuration(lead.idleMs / 60000)}</span>
+                    {lead.slaStatus === "at_risk" || lead.slaStatus === "breached" ? (
+                      <SlaIndicator compact status={lead.slaStatus} kind={lead.slaKind} dueAt={lead.slaDueAt} />
+                    ) : null}
+                  </div>
                 </article>
               ))}
               {!items.length ? (

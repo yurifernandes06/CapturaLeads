@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PRIORITIES, SOURCES, STAGES } from "./leads";
+import { SLA_STATUSES } from "./sla/config";
 
 /** Filtros da lista de leads, sempre serializados na URL (compartilháveis e com voltar do navegador). */
 
@@ -9,6 +10,7 @@ const opt = <T extends z.ZodType>(s: T) => z.preprocess((v) => emptyToUndefined(
 
 export const SORTS = {
   recent: "Mais recentes",
+  sla: "Urgência (SLA)",
   oldest: "Mais antigos",
   value: "Maior valor",
   name: "Nome (A-Z)",
@@ -23,6 +25,7 @@ export const leadFiltersSchema = z.object({
   /** "me", "none" ou id do usuário */
   owner: opt(z.string()),
   tag: opt(z.string().trim().toLowerCase()),
+  sla: opt(z.enum(SLA_STATUSES)),
   from: opt(z.iso.date()),
   to: opt(z.iso.date()),
   sort: opt(z.enum(Object.keys(SORTS) as [keyof typeof SORTS, ...(keyof typeof SORTS)[]])),

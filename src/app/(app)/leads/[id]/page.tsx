@@ -4,15 +4,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { PriorityBadge, WhatsAppIcon } from "@/components/leads/badges";
+import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Timeline } from "@/components/leads/timeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency, formatDateTime, formatRelative } from "@/lib/format";
+import { formatCurrency, formatDateTime, formatDuration, formatRelative } from "@/lib/format";
 import { SOURCE_LABEL } from "@/lib/leads";
 import { formatPhone, whatsappLink } from "@/lib/phone";
+import { evaluateSla } from "@/lib/sla/engine";
+import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { getLead, listOwners } from "@/server/leads/queries";
+import { getSetting } from "@/server/settings";
 import { ActivityComposer } from "./activity-composer";
 import { DeleteLeadButton, EditLeadButton, OwnerSelect, StageControl } from "./lead-controls";
 
@@ -21,13 +25,14 @@ export const metadata: Metadata = { title: "Lead" };
 export default async function LeadPage(props: PageProps<"/leads/[id]">) {
   const user = await requireUser();
   const { id } = await props.params;
-  const [data, owners] = await Promise.all([getLead(id), listOwners()]);
+  const [data, owners, slaConfig] = await Promise.all([getLead(id), listOwners(), getSetting("sla")]);
   if (!data) notFound();
 
   const { lead, ownerName, activities } = data;
   const now = requestNow();
   const ownerMap = new Map(owners.map((o) => [o.id, o.name]));
   const firstName = lead.name.split(" ")[0];
+  const sla = evaluateSla(lead, slaConfig, new Date(now));
 
   return (
     <div className="grid gap-6">
@@ -92,6 +97,47 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
         </section>
 
         <aside className="grid gap-6 lg:sticky lg:top-20">
+          <Card className={cn(sla.status === "breached" && "ring-danger/40", sla.status === "at_risk" && "ring-warning/40")}>
+            <CardHeader>
+              <CardTitle>SLA</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm">
+              {sla.kind ? (
+                <>
+                  <SlaIndicator
+                    status={sla.status}
+                    kind={sla.kind}
+                    dueAt={sla.dueAt.toISOString()}
+                    paused={sla.paused}
+                  />
+                  <div className="grid gap-2">
+                    <Milestone label="Prazo" date={sla.dueAt} />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Consumido</span>
+                      <span className="tabular">
+                        {formatDuration(sla.elapsedMinutes)} de {formatDuration(sla.targetMinutes)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          sla.status === "breached" ? "bg-danger" : sla.status === "at_risk" ? "bg-warning" : "bg-success",
+                        )}
+                        style={{ width: `${Math.min(100, (sla.elapsedMinutes / sla.targetMinutes) * 100)}%` }}
+                      />
+                    </div>
+                    {sla.paused ? (
+                      <p className="text-xs text-muted-foreground">Fora do expediente: o relógio do SLA está pausado.</p>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Lead fechado, sem SLA ativo.</p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Responsável</CardTitle>

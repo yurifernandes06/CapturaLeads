@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { SORTS, countActiveFilters, filtersToSearch, type LeadFilters } from "@/lib/lead-filters";
 import { PRIORITIES, PRIORITY_META, SOURCES, SOURCE_LABEL, STAGES, STAGE_META } from "@/lib/leads";
+import { SLA_STATUSES, SLA_STATUS_META } from "@/lib/sla/config";
 import { cn } from "@/lib/utils";
 
 type Option = { id: string; name: string };
@@ -17,6 +18,8 @@ const QUICK_VIEWS: { label: string; filters: LeadFilters }[] = [
   { label: "Em aberto", filters: { stage: "open" } },
   { label: "Meus leads", filters: { owner: "me", stage: "open" } },
   { label: "Sem responsável", filters: { owner: "none" } },
+  { label: "SLA estourado", filters: { sla: "breached" } },
+  { label: "Em risco", filters: { sla: "at_risk" } },
   { label: "Quentes", filters: { priority: "high", stage: "open" } },
 ];
 
@@ -103,7 +106,7 @@ export function LeadFiltersBar({ filters, owners, tags }: { filters: LeadFilters
       </div>
 
       {expanded ? (
-        <div className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           <FilterField label="Etapa">
             <NativeSelect value={filters.stage ?? ""} onChange={(e) => set("stage", e.target.value as LeadFilters["stage"])}>
               <option value="">Todas</option>
@@ -150,6 +153,16 @@ export function LeadFiltersBar({ filters, owners, tags }: { filters: LeadFilters
               ))}
             </NativeSelect>
           </FilterField>
+          <FilterField label="SLA">
+            <NativeSelect value={filters.sla ?? ""} onChange={(e) => set("sla", e.target.value as LeadFilters["sla"])}>
+              <option value="">Todos</option>
+              {SLA_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {SLA_STATUS_META[s].label}
+                </option>
+              ))}
+            </NativeSelect>
+          </FilterField>
           <FilterField label="Tag">
             <NativeSelect value={filters.tag ?? ""} onChange={(e) => set("tag", e.target.value)}>
               <option value="">Todas</option>
@@ -167,7 +180,7 @@ export function LeadFiltersBar({ filters, owners, tags }: { filters: LeadFilters
             <Input type="date" value={filters.to ?? ""} onChange={(e) => set("to", e.target.value)} />
           </FilterField>
           {active ? (
-            <div className="sm:col-span-2 lg:col-span-4 xl:col-span-7">
+            <div className="sm:col-span-2 lg:col-span-4 xl:col-span-8">
               <Button variant="ghost" size="sm" onClick={() => apply({ q: filters.q, sort: filters.sort })}>
                 <XIcon /> Limpar filtros
               </Button>
