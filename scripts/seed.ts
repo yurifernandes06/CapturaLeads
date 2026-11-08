@@ -120,12 +120,29 @@ async function seedLeads(users: (typeof schema.users.$inferSelect)[]) {
   return 48;
 }
 
+async function seedForms() {
+  await db
+    .insert(schema.forms)
+    .values({
+      slug: "orcamento",
+      name: "Orçamento (site)",
+      title: "Receba seu orçamento pelo WhatsApp",
+      description: "Deixe seu contato e um especialista fala com você em poucos minutos, no horário comercial.",
+      priority: "high",
+      tags: ["site"],
+      welcomeMessage: "Oi, {{primeiro_nome}}! Recebemos seu pedido de orçamento. Sou {{vendedor}} e já vou te atender 🙂",
+    })
+    .onConflictDoNothing({ target: schema.forms.slug });
+}
+
 async function main() {
   const users = await seedUsers();
   console.log(`✓ ${users.length} usuários (senha: ${DEMO_PASSWORD})`);
   for (const u of USERS) console.log(`  - ${u.email} (${u.role})`);
   const leads = await seedLeads(users);
   console.log(leads ? `✓ ${leads} leads de demonstração` : "• leads já existentes, pulando");
+  await seedForms();
+  console.log("✓ formulário de exemplo em /f/orcamento");
 }
 
 main()
