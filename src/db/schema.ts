@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { ACTIVITY_TYPES, PRIORITIES, SOURCES, STAGES } from "@/lib/leads";
+import { SLA_STATUSES } from "@/lib/sla/config";
 
 /** Timestamps em ms (integer) — ordenáveis e sem ambiguidade de fuso. */
 export const timestamp = (name: string) => integer(name, { mode: "timestamp_ms" });
@@ -79,6 +80,13 @@ export const leads = sqliteTable(
     lastOutboundAt: timestamp("last_outbound_at"),
     lastActivityAt: timestamp("last_activity_at"),
     closedAt: timestamp("closed_at"),
+    /** Estado do SLA materializado pelo motor (recalculado a cada mudança e pelo sweep). */
+    slaKind: text("sla_kind", { enum: ["first_response", "reply", "follow_up"] }),
+    slaStatus: text("sla_status", { enum: SLA_STATUSES }).notNull().default("none"),
+    slaStartedAt: timestamp("sla_started_at"),
+    slaDueAt: timestamp("sla_due_at"),
+    /** Último alerta de estouro enviado — evita alertar duas vezes o mesmo ciclo. */
+    slaNotifiedAt: timestamp("sla_notified_at"),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at")
       .notNull()
@@ -90,6 +98,7 @@ export const leads = sqliteTable(
     index("leads_stage_idx").on(t.stage),
     index("leads_owner_idx").on(t.ownerId),
     index("leads_created_idx").on(t.createdAt),
+    index("leads_sla_idx").on(t.slaStatus, t.slaDueAt),
   ],
 );
 
@@ -111,3 +120,22 @@ export const activities = sqliteTable(
 
 export type Lead = typeof leads.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
+
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    leadId: text("lead_id").references(() => leads.id, { onDelete: "cascade" }),
+    type: text("type", { enum: ["sla_breach", "sla_at_risk", "new_lead", "new_message"] }).notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    readAt: timestamp("read_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("notifications_user_idx").on(t.userId, t.readAt)],
+);
+
+export type Notification = typeof notifications.$inferSelect;

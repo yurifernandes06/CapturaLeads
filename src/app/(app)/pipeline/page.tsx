@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { pipelineLeads } from "@/server/leads/queries";
+import { sweepIfStale } from "@/server/sla/service";
 import { Board, type BoardLead } from "./board";
 
 export const metadata: Metadata = { title: "Pipeline" };
@@ -18,6 +19,7 @@ export default async function PipelinePage(props: PageProps<"/pipeline">) {
   const user = await requireUser();
   const { owner } = await props.searchParams;
   const view = owner === "me" ? "me" : "all";
+  await sweepIfStale();
   const rows = await pipelineLeads(view, user.id);
   const now = requestNow();
 
@@ -32,6 +34,9 @@ export default async function PipelinePage(props: PageProps<"/pipeline">) {
     phone: lead.phone,
     ageMs: now - lead.createdAt.getTime(),
     idleMs: now - (lead.lastActivityAt ?? lead.createdAt).getTime(),
+    slaStatus: lead.slaStatus,
+    slaKind: lead.slaKind,
+    slaDueAt: lead.slaDueAt?.toISOString() ?? null,
   }));
 
   return (

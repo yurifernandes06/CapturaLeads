@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/app/page-header";
 import { PriorityBadge, StageBadge, WhatsAppIcon } from "@/components/leads/badges";
+import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { listLeads, listOwners, listTags } from "@/server/leads/queries";
+import { sweepIfStale } from "@/server/sla/service";
 import { LeadFiltersBar } from "./lead-filters";
 import { NewLeadDialog } from "./new-lead-dialog";
 
@@ -22,6 +24,7 @@ export const metadata: Metadata = { title: "Leads" };
 export default async function LeadsPage(props: PageProps<"/leads">) {
   const user = await requireUser();
   const filters = parseLeadFilters(await props.searchParams);
+  await sweepIfStale();
   const [{ rows, total, page, pageCount }, owners, tags] = await Promise.all([
     listLeads(filters, user.id),
     listOwners(),
@@ -65,6 +68,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
                 <TableHead className="pl-4">Lead</TableHead>
                 <TableHead className="hidden md:table-cell">Contato</TableHead>
                 <TableHead>Etapa</TableHead>
+                <TableHead>SLA</TableHead>
                 <TableHead className="hidden lg:table-cell">Origem</TableHead>
                 <TableHead className="hidden lg:table-cell">Responsável</TableHead>
                 <TableHead className="hidden text-right sm:table-cell">Valor</TableHead>
@@ -100,6 +104,14 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
                   </TableCell>
                   <TableCell>
                     <StageBadge stage={lead.stage} />
+                  </TableCell>
+                  <TableCell>
+                    <SlaIndicator
+                      compact
+                      status={lead.slaStatus}
+                      kind={lead.slaKind}
+                      dueAt={lead.slaDueAt?.toISOString() ?? null}
+                    />
                   </TableCell>
                   <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                     {SOURCE_LABEL[lead.source]}

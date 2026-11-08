@@ -33,6 +33,7 @@ export function buildLeadWhere(filters: LeadFilters, currentUserId: string, tz =
   if (filters.owner === "me") conds.push(eq(l.ownerId, currentUserId));
   else if (filters.owner === "none") conds.push(isNull(l.ownerId));
   else if (filters.owner) conds.push(eq(l.ownerId, filters.owner));
+  if (filters.sla) conds.push(eq(l.slaStatus, filters.sla));
   if (filters.tag) conds.push(sql`exists (select 1 from json_each(${l.tags}) as je where je.value = ${filters.tag})`);
   if (filters.from) conds.push(gte(l.createdAt, dayStart(filters.from, tz)));
   if (filters.to) {
@@ -52,6 +53,12 @@ function orderBy(sort: LeadFilters["sort"]) {
       return [desc(l.value), desc(l.createdAt)];
     case "name":
       return [asc(sql`${l.name} collate nocase`)];
+    case "sla":
+      return [
+        sql`case ${l.slaStatus} when 'breached' then 0 when 'at_risk' then 1 when 'ok' then 2 else 3 end`,
+        sql`${l.slaDueAt} is null`,
+        asc(l.slaDueAt),
+      ];
     case "activity":
       return [asc(sql`coalesce(${l.lastActivityAt}, ${l.createdAt})`)];
     default:
