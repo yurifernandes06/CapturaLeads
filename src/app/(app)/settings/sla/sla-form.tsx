@@ -116,6 +116,7 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
             <label className="flex items-center gap-3 text-sm font-medium">
               <Switch
                 name="bhEnabled"
+                value="on"
                 checked={draft.businessHours.enabled}
                 onCheckedChange={(enabled) => setBh({ enabled })}
               />
@@ -201,6 +202,7 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
             <label className="flex items-start gap-3 text-sm">
               <Switch
                 name="whatsappAlerts"
+                value="on"
                 checked={draft.whatsappAlerts}
                 onCheckedChange={(whatsappAlerts) => set({ whatsappAlerts })}
                 className="mt-0.5"
