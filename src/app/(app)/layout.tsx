@@ -11,6 +11,7 @@ import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { listNotifications } from "@/server/notifications";
 import { getSetting } from "@/server/settings";
+import { countAwaiting } from "@/server/inbox";
 import { countDueTasks } from "@/server/tasks";
 
 async function CurrentUserMenu() {
@@ -40,7 +41,8 @@ async function CurrentUserMenu() {
 const navBadges = cache(async (): Promise<NavBadges> => {
   const user = await requireUser();
   const { timezone } = await getSetting("sla");
-  return { "/tasks": await countDueTasks(user.id, requestNow(), timezone) };
+  const [tasks, inbox] = await Promise.all([countDueTasks(user.id, requestNow(), timezone), countAwaiting(user.id)]);
+  return { "/tasks": tasks, "/inbox": inbox };
 });
 
 async function SidebarNav() {

@@ -14,6 +14,7 @@ export async function sendWhatsAppAction(leadId: string, body: string): Promise<
     await sendToLead(leadId, text, user.id);
     revalidatePath(`/leads/${leadId}`);
     revalidatePath("/leads");
+    revalidatePath("/inbox");
     return { ok: true };
   } catch (err) {
     if (err instanceof WhatsAppSendError) return { ok: false, error: err.message, data: { hint: err.hint } };

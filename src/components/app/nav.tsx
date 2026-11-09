@@ -4,6 +4,7 @@ import {
   KanbanSquareIcon,
   LayoutDashboardIcon,
   ListTodoIcon,
+  MessagesSquareIcon,
   SettingsIcon,
   UsersRoundIcon,
   type LucideIcon,
@@ -16,6 +17,7 @@ export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+  { href: "/inbox", label: "Inbox", icon: MessagesSquareIcon },
   { href: "/leads", label: "Leads", icon: UsersRoundIcon },
   { href: "/pipeline", label: "Pipeline", icon: KanbanSquareIcon },
   { href: "/tasks", label: "Tarefas", icon: ListTodoIcon },
