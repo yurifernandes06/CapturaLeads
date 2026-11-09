@@ -29,7 +29,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   const key = `login:${ip}:${parsed.data.email}`;
-  const limit = rateLimit(key, 8, 15 * 60 * 1000);
+  const limit = await rateLimit(key, 8, 15 * 60 * 1000);
   if (!limit.ok) {
     const min = Math.ceil(limit.retryAfterMs / 60000);
     return { error: `Muitas tentativas. Tente novamente em ${min} min.`, email };
@@ -43,7 +43,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   if (!user || !valid) return { error: "E-mail ou senha incorretos.", email };
   if (!user.active) return { error: "Usuário desativado. Fale com o administrador.", email };
 
-  resetRateLimit(key);
+  await resetRateLimit(key);
   await createSession(user.id);
   redirect(safeNext(parsed.data.next));
 }

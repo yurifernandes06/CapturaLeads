@@ -13,7 +13,7 @@ export async function submitPublicForm(_prev: ActionResult, formData: FormData):
     if (String(formData.get("website") ?? "")) return { ok: true };
 
     const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-    if (!rateLimit(`form:${ip}`, 5, 60_000).ok) {
+    if (!(await rateLimit(`form:${ip}`, 5, 60_000)).ok) {
       return { ok: false, error: "Recebemos muitas tentativas. Aguarde um minuto e tente de novo." };
     }
 
