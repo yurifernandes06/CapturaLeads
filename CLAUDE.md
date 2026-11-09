@@ -16,3 +16,5 @@
 - Regras de negócio puras (SLA, telefone) ficam isoladas e testadas com Vitest (`*.test.ts`).
 - Datas no banco: `integer` em ms (`timestamp_ms`). Fuso de negócio vem das configurações de SLA.
 - UI e mensagens em pt-BR. Commits em Conventional Commits referenciando a issue.
+- Quebra de linha: LF em todo o repo (`.gitattributes`). No Windows, scripts que gravam arquivos
+  devem escrever LF (ex.: Python `open(p, "w", newline="")`), senão o diff vira o arquivo inteiro.
