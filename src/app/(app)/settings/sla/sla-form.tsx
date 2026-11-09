@@ -220,6 +220,21 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
                 </span>
               </span>
             </label>
+            <label className="mt-4 flex items-start gap-3 text-sm">
+              <Switch
+                name="taskWhatsappReminders"
+                value="on"
+                checked={draft.taskWhatsappReminders}
+                onCheckedChange={(taskWhatsappReminders) => set({ taskWhatsappReminders })}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="font-medium">Lembrar o responsável no WhatsApp quando uma tarefa vencer</span>
+                <span className="block text-muted-foreground">
+                  Um lembrete por tarefa, sempre em horário comercial. Vencimentos fora do expediente avisam na abertura.
+                </span>
+              </span>
+            </label>
           </CardContent>
         </Card>
 

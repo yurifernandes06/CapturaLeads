@@ -1,16 +1,17 @@
 "use client";
 
-import { AlarmClockIcon, BellIcon, CheckCheckIcon, MessageCircleIcon, SparklesIcon } from "lucide-react";
+import { AlarmClockIcon, BellIcon, CheckCheckIcon, ListTodoIcon, MessageCircleIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { NotificationType } from "@/db/schema";
 import { cn } from "@/lib/utils";
 import { markAllNotificationsRead } from "./notifications-actions";
 
 export type BellItem = {
   id: string;
-  type: "sla_breach" | "sla_at_risk" | "new_lead" | "new_message";
+  type: NotificationType;
   title: string;
   body: string | null;
   leadId: string | null;
@@ -23,7 +24,8 @@ const ICON = {
   sla_at_risk: { icon: AlarmClockIcon, className: "bg-warning/15 text-warning" },
   new_lead: { icon: SparklesIcon, className: "bg-primary/12 text-primary" },
   new_message: { icon: MessageCircleIcon, className: "bg-whatsapp/15 text-whatsapp" },
-};
+  task_due: { icon: ListTodoIcon, className: "bg-warning/15 text-warning" },
+} satisfies Record<NotificationType, unknown>;
 
 export function NotificationBell({ items, unread }: { items: BellItem[]; unread: number }) {
   const [pending, startTransition] = useTransition();

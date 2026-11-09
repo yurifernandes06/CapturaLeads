@@ -35,6 +35,8 @@ export const slaConfigSchema = z
     atRiskPercent: z.number().int().min(10).max(95),
     /** Avisar o responsável no WhatsApp quando o SLA estourar. */
     whatsappAlerts: z.boolean(),
+    /** Lembrar o responsável no WhatsApp quando uma tarefa vencer. Configs antigas ganham o default. */
+    taskWhatsappReminders: z.boolean().default(true),
   })
   .refine((c) => c.businessHours.start < c.businessHours.end, {
     message: "O fim do expediente precisa ser depois do início.",
@@ -52,6 +54,7 @@ export const DEFAULT_SLA_CONFIG: SlaConfig = {
   followUpHours: 20,
   atRiskPercent: 70,
   whatsappAlerts: true,
+  taskWhatsappReminders: true,
 };
 
 export const SLA_KIND_LABEL = {
