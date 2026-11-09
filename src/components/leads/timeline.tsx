@@ -45,6 +45,7 @@ function title({ activity: a, userName }: Item, owners: Map<string, string>): st
     case "stage_change": {
       const from = STAGE_META[meta.from as Stage]?.label ?? meta.from;
       const to = STAGE_META[meta.to as Stage]?.label ?? meta.to;
+      if (meta.auto) return `Movido para ${to} automaticamente no primeiro contato`;
       return `${who} moveu de ${from} para ${to}${meta.lostReason ? ` (${meta.lostReason})` : ""}`;
     }
     case "assignment":

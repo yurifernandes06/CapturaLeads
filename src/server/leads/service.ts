@@ -154,9 +154,30 @@ export async function recordActivity(
       .update(schema.leads)
       .set({ firstResponseAt: at })
       .where(and(eq(schema.leads.id, leadId), sql`${schema.leads.firstResponseAt} is null`));
+    await autoAdvanceFromNew(leadId, opts.userId ?? null, at);
   }
   await refreshLeadSla(leadId);
   return activity!;
+}
+
+/**
+ * Primeiro contato humano (WhatsApp enviado ou ligação) tira o lead de "Novo".
+ * O UPDATE condicional garante que só acontece uma vez, mesmo com envios simultâneos.
+ */
+async function autoAdvanceFromNew(leadId: string, userId: string | null, at: Date) {
+  const moved = await db
+    .update(schema.leads)
+    .set({ stage: "contacted" })
+    .where(and(eq(schema.leads.id, leadId), eq(schema.leads.stage, "new")))
+    .returning({ id: schema.leads.id });
+  if (!moved.length) return;
+  await db.insert(schema.activities).values({
+    leadId,
+    userId,
+    type: "stage_change",
+    meta: { from: "new", to: "contacted", auto: true },
+    createdAt: at,
+  });
 }
 
 export async function changeStage(leadId: string, stage: Stage, actorId: string, lostReason?: string | null) {
