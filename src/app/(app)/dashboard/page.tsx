@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import { PageHeader } from "@/components/app/page-header";
 import { BarList, ColumnChart } from "@/components/charts";
 import { PriorityBadge } from "@/components/leads/badges";
+import { TaskList } from "@/components/tasks/task-list";
 import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,6 +27,7 @@ import { requestNow } from "@/server/clock";
 import { RANGES, getAttentionQueue, getDashboard, type RangeKey } from "@/server/dashboard";
 import { getSetting } from "@/server/settings";
 import { sweepIfStale } from "@/server/sla/service";
+import { countDueTasks, listDueTasks, toTaskView } from "@/server/tasks";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -42,7 +44,13 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   await sweepIfStale();
   const config = await getSetting("sla");
   const now = requestNow();
-  const [data, queue] = await Promise.all([getDashboard({ range, ownerId, config, now }), getAttentionQueue(ownerId)]);
+  const [data, queue, dueTasks, dueCount] = await Promise.all([
+    getDashboard({ range, ownerId, config, now }),
+    getAttentionQueue(ownerId),
+    // Tarefas são sempre do próprio usuário, independente do escopo do painel.
+    listDueTasks(user.id, now, config.timezone),
+    countDueTasks(user.id, now, config.timezone),
+  ]);
   const { kpis } = data;
 
   const delta = kpis.prevLeads ? (kpis.newLeads - kpis.prevLeads) / kpis.prevLeads : null;
@@ -182,21 +190,45 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Leads por dia</CardTitle>
-            <CardDescription>Entradas nos últimos {RANGES[range]} dias.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ColumnChart
-              label="Leads novos por dia"
-              data={data.perDay.map((d) => ({ key: d.day, value: d.count }))}
-              formatTick={(key, i) =>
-                i % tickEvery === 0 || i === data.perDay.length - 1 ? key.split("-").reverse().slice(0, 2).join("/") : null
-              }
-            />
-          </CardContent>
-        </Card>
+        <div className="grid content-start gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Leads por dia</CardTitle>
+              <CardDescription>Entradas nos últimos {RANGES[range]} dias.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ColumnChart
+                label="Leads novos por dia"
+                data={data.perDay.map((d) => ({ key: d.day, value: d.count }))}
+                formatTick={(key, i) =>
+                  i % tickEvery === 0 || i === data.perDay.length - 1 ? key.split("-").reverse().slice(0, 2).join("/") : null
+                }
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Suas tarefas de hoje</CardTitle>
+              <CardDescription>
+                {dueCount ? `${dueCount} para hoje ou atrasadas.` : "Nada vencendo hoje."}
+              </CardDescription>
+              <CardAction>
+                <Link href="/tasks" className="text-sm font-medium text-primary hover:underline">
+                  Ver todas
+                </Link>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <TaskList
+                items={dueTasks.map(({ task, leadName }) =>
+                  toTaskView(task, { now, timezone: config.timezone, user }, { lead: { id: task.leadId, name: leadName } }),
+                )}
+                empty="Tudo em dia. ✅"
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

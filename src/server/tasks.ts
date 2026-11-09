@@ -64,6 +64,17 @@ export async function countDueTasks(userId: string, now: number, timezone: strin
   return row?.n ?? 0;
 }
 
+/** Tarefas abertas que vencem até o fim de hoje, mais urgentes primeiro (card do dashboard). */
+export async function listDueTasks(userId: string, now: number, timezone: string, limit = 5) {
+  return db
+    .select({ task: t, leadName: schema.leads.name })
+    .from(t)
+    .innerJoin(schema.leads, eq(t.leadId, schema.leads.id))
+    .where(and(eq(t.assigneeId, userId), isNull(t.doneAt), lt(t.dueAt, new Date(endOfDay(now, timezone)))))
+    .orderBy(asc(t.dueAt))
+    .limit(limit);
+}
+
 export async function createTask(input: {
   leadId: string;
   title: string;
