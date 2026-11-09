@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CUSTOM_HOLIDAY_RE } from "./holidays";
 
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use o formato HH:MM.");
 
@@ -12,6 +13,14 @@ export const slaConfigSchema = z
       start: time,
       end: time,
     }),
+    /** Feriados param o relógio como fim de semana. Configs antigas ganham o default. */
+    holidays: z
+      .object({
+        national: z.boolean(),
+        optional: z.boolean(),
+        custom: z.array(z.string().trim().regex(CUSTOM_HOLIDAY_RE, "Use MM-DD ou AAAA-MM-DD, seguido do nome.")).max(100),
+      })
+      .default({ national: true, optional: true, custom: [] }),
     /** Prazo da 1ª resposta por prioridade, em minutos úteis. */
     firstResponseMinutes: z.object({
       high: z.number().int().min(1).max(10_080),
@@ -37,6 +46,7 @@ export type SlaConfig = z.infer<typeof slaConfigSchema>;
 export const DEFAULT_SLA_CONFIG: SlaConfig = {
   timezone: "America/Sao_Paulo",
   businessHours: { enabled: true, days: [1, 2, 3, 4, 5], start: "08:00", end: "18:00" },
+  holidays: { national: true, optional: true, custom: [] },
   firstResponseMinutes: { high: 5, medium: 15, low: 60 },
   replyMinutes: 30,
   followUpHours: 20,

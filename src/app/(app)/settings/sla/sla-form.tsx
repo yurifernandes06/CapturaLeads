@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import { formatDuration } from "@/lib/format";
 import { addBusinessMinutes } from "@/lib/sla/business-time";
 import type { SlaConfig } from "@/lib/sla/config";
+import { upcomingHolidays } from "@/lib/sla/holidays";
 import { cn } from "@/lib/utils";
 import { saveSlaConfig } from "./actions";
 
@@ -39,6 +41,8 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
   const set = (patch: Partial<SlaConfig>) => setDraft((d) => ({ ...d, ...patch }));
   const setBh = (patch: Partial<SlaConfig["businessHours"]>) =>
     setDraft((d) => ({ ...d, businessHours: { ...d.businessHours, ...patch } }));
+  const setHol = (patch: Partial<SlaConfig["holidays"]>) =>
+    setDraft((d) => ({ ...d, holidays: { ...d.holidays, ...patch } }));
   const setFr = (key: keyof SlaConfig["firstResponseMinutes"], v: number) =>
     setDraft((d) => ({ ...d, firstResponseMinutes: { ...d.firstResponseMinutes, [key]: v } }));
 
@@ -194,6 +198,8 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
           </CardContent>
         </Card>
 
+        <HolidaysCard holidays={draft.holidays} onChange={setHol} timezone={draft.timezone} />
+
         <Card>
           <CardHeader>
             <CardTitle>Alertas</CardTitle>
@@ -273,6 +279,85 @@ function NumberField({
   );
 }
 
+function HolidaysCard({
+  holidays,
+  onChange,
+  timezone,
+}: {
+  holidays: SlaConfig["holidays"];
+  onChange: (patch: Partial<SlaConfig["holidays"]>) => void;
+  timezone: string;
+}) {
+  const [text, setText] = useState(holidays.custom.join("\n"));
+  const [today] = useState(() => new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date()));
+  const next = upcomingHolidays(today, holidays, 4);
+  const fmt = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "2-digit", month: "short", timeZone: "UTC" });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Feriados</CardTitle>
+        <CardDescription>Em feriado o relógio para, como no fim de semana.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="grid content-start gap-4">
+          <label className="flex items-center gap-3 text-sm font-medium">
+            <Switch
+              name="holidaysNational"
+              value="on"
+              checked={holidays.national}
+              onCheckedChange={(national) => onChange({ national })}
+            />
+            Feriados nacionais (inclui Sexta-feira Santa)
+          </label>
+          <label className="flex items-center gap-3 text-sm font-medium">
+            <Switch
+              name="holidaysOptional"
+              value="on"
+              checked={holidays.optional}
+              onCheckedChange={(optional) => onChange({ optional })}
+            />
+            Carnaval e Corpus Christi
+          </label>
+          <div className="grid gap-2">
+            <Label htmlFor="holidaysCustom">Feriados da empresa ou da cidade</Label>
+            <Textarea
+              id="holidaysCustom"
+              name="holidaysCustom"
+              rows={4}
+              value={text}
+              placeholder={"01-25 Aniversário de São Paulo\n2026-12-24 Véspera de Natal"}
+              onChange={(e) => {
+                setText(e.target.value);
+                onChange({ custom: e.target.value.split("\n").map((l) => l.trim()).filter(Boolean) });
+              }}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Um por linha. <code>MM-DD</code> repete todo ano; <code>AAAA-MM-DD</code> vale só naquele ano.
+            </p>
+          </div>
+        </div>
+        <div className="grid content-start gap-2">
+          <p className="text-sm font-medium">Próximos</p>
+          {next.length ? (
+            <ul className="grid gap-1.5 text-sm">
+              {next.map((h) => (
+                <li key={h.date} className="flex items-baseline justify-between gap-3 rounded-md bg-muted/50 px-2.5 py-1.5">
+                  <span className="truncate">{h.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground tabular">{fmt.format(new Date(`${h.date}T12:00:00Z`))}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum feriado ativo.</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 const MinutesField = (props: Omit<Parameters<typeof NumberField>[0], "suffix">) => <NumberField {...props} suffix="min" />;
 
 /** Mostra, ao vivo, quando venceria o prazo de um lead que chegasse agora. */
@@ -285,6 +370,8 @@ function Simulator({ config }: { config: SlaConfig }) {
 
   const fmt = new Intl.DateTimeFormat("pt-BR", {
     weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     timeZone: config.timezone,

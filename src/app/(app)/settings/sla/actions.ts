@@ -20,6 +20,14 @@ export async function saveSlaConfig(_prev: ActionResult, formData: FormData): Pr
         start: String(formData.get("start") ?? ""),
         end: String(formData.get("end") ?? ""),
       },
+      holidays: {
+        national: formData.get("holidaysNational") === "on",
+        optional: formData.get("holidaysOptional") === "on",
+        custom: String(formData.get("holidaysCustom") ?? "")
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter(Boolean),
+      },
       firstResponseMinutes: {
         high: int(formData.get("frHigh")),
         medium: int(formData.get("frMedium")),
