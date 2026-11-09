@@ -11,7 +11,10 @@ export async function register() {
   const { sweepSla } = await import("./server/sla/service");
   const tick = () =>
     sweepSla()
-      .then((r) => r.updated && console.log(`[sla] ${r.updated} leads atualizados, ${r.breached} estourados`))
+      .then((r) => {
+        if (r.updated) console.log(`[sla] ${r.updated} leads atualizados, ${r.breached} estourados`);
+        if (r.reminded) console.log(`[tasks] ${r.reminded} lembretes de tarefa enviados`);
+      })
       .catch((err) => console.error("[sla] falha no sweep", err));
 
   setTimeout(tick, 5_000).unref();

@@ -73,6 +73,24 @@ export async function sendToLead(leadId: string, body: string, userId: string) {
   });
 }
 
+/** Lembra o responsável no próprio WhatsApp que uma tarefa venceu. */
+export async function sendTaskReminder(input: {
+  phone: string;
+  userName: string;
+  taskTitle: string;
+  leadId: string;
+  leadName: string;
+}) {
+  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const text = [
+    `📝 *Tarefa vencida*`,
+    `${input.userName.split(" ")[0]}, está na hora de: *${input.taskTitle}*`,
+    `Lead: ${input.leadName}`,
+    `${appUrl}/leads/${input.leadId}`,
+  ].join("\n");
+  await whatsapp().sendText(input.phone, text);
+}
+
 /** Avisa o vendedor no próprio WhatsApp que um lead estourou o SLA. */
 export async function sendSlaAlert(lead: schema.Lead) {
   if (!lead.ownerId) return;

@@ -1,9 +1,11 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, isNotNull, isNull, lt } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNotNull, isNull, lt, lte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { TaskView } from "@/components/tasks/task-list";
-import { endOfDay, formatDue, taskBucket } from "@/lib/tasks";
+import type { SlaConfig } from "@/lib/sla/config";
+import { endOfDay, formatDue, shouldRemind, taskBucket } from "@/lib/tasks";
 import type { CurrentUser } from "@/server/auth/dal";
+import { sendTaskReminder } from "@/server/whatsapp/service";
 
 const t = schema.tasks;
 
@@ -109,4 +111,55 @@ export async function deleteTask(id: string, user: CurrentUser) {
   const task = await loadEditable(id, user);
   await db.delete(t).where(eq(t.id, id));
   return task;
+}
+
+/**
+ * Lembretes de tarefas vencidas: roda no tick do SLA. Marca `remindedAt` antes de
+ * avisar para nunca repetir, mesmo se o WhatsApp falhar. Devolve quantas lembrou.
+ */
+export async function remindDueTasks(config: SlaConfig, now = Date.now()) {
+  const due = await db
+    .select({
+      task: t,
+      leadName: schema.leads.name,
+      phone: schema.users.phone,
+      userName: schema.users.name,
+      active: schema.users.active,
+    })
+    .from(t)
+    .innerJoin(schema.leads, eq(t.leadId, schema.leads.id))
+    .innerJoin(schema.users, eq(t.assigneeId, schema.users.id))
+    .where(and(isNull(t.doneAt), isNull(t.remindedAt), lte(t.dueAt, new Date(now))))
+    .limit(100);
+
+  let reminded = 0;
+  for (const row of due) {
+    const { task } = row;
+    const ok = shouldRemind(
+      { dueAt: task.dueAt.getTime(), doneAt: null, remindedAt: null },
+      now,
+      config,
+    );
+    if (!ok) continue;
+    await db.update(t).set({ remindedAt: new Date(now) }).where(eq(t.id, task.id));
+    if (!row.active) continue;
+    reminded++;
+    await db.insert(schema.notifications).values({
+      userId: task.assigneeId!,
+      leadId: task.leadId,
+      type: "task_due",
+      title: `Tarefa vencida: ${task.title}`.slice(0, 140),
+      body: row.leadName,
+    });
+    if (config.taskWhatsappReminders && row.phone) {
+      await sendTaskReminder({
+        phone: row.phone,
+        userName: row.userName,
+        taskTitle: task.title,
+        leadId: task.leadId,
+        leadName: row.leadName,
+      }).catch((err) => console.error("[tasks] lembrete no WhatsApp falhou", err));
+    }
+  }
+  return reminded;
 }
