@@ -104,3 +104,19 @@ export function SettingsSkeleton() {
     </div>
   );
 }
+
+export function InboxSkeleton() {
+  return (
+    <div aria-busy className="grid gap-6">
+      <HeaderSkeleton />
+      <div className="grid h-[calc(100svh-13rem)] min-h-[28rem] gap-px overflow-hidden rounded-xl border lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <div className="grid content-start gap-px">
+          {Array.from({ length: 7 }, (_, i) => (
+            <Skeleton key={i} className="h-16 rounded-none" />
+          ))}
+        </div>
+        <Skeleton className="rounded-none max-lg:hidden" />
+      </div>
+    </div>
+  );
+}
