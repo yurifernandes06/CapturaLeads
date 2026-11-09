@@ -161,3 +161,24 @@ export const forms = sqliteTable("forms", {
 });
 
 export type Form = typeof forms.$inferSelect;
+
+/** Tarefas/lembretes ligados a um lead ("ligar amanhã 10h", "enviar proposta"). */
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: id(),
+    leadId: text("lead_id")
+      .notNull()
+      .references(() => leads.id, { onDelete: "cascade" }),
+    /** Quem executa. Vendedor removido → tarefa fica sem dono, não some. */
+    assigneeId: text("assignee_id").references(() => users.id, { onDelete: "set null" }),
+    createdById: text("created_by_id").references(() => users.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    dueAt: timestamp("due_at").notNull(),
+    doneAt: timestamp("done_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("tasks_assignee_idx").on(t.assigneeId, t.doneAt, t.dueAt), index("tasks_lead_idx").on(t.leadId)],
+);
+
+export type Task = typeof tasks.$inferSelect;
