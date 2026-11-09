@@ -62,3 +62,29 @@ export function isInlineSafe(mime: string) {
   const m = baseMime(mime);
   return (m.startsWith("image/") && m !== "image/svg+xml") || m.startsWith("audio/") || m.startsWith("video/") || m === "application/pdf";
 }
+
+export type ByteRange = { start: number; end: number };
+
+/**
+ * Lê o cabeçalho `Range: bytes=...` (um intervalo só — o que o Safari/iOS pede para áudio
+ * e vídeo). `null` = sem Range válido (responde 200 inteiro); `"unsatisfiable"` = 416.
+ */
+export function parseRange(header: string | null, size: number): ByteRange | "unsatisfiable" | null {
+  if (!header || size <= 0) return null;
+  const m = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!m || (m[1] === "" && m[2] === "")) return null;
+  let start: number;
+  let end: number;
+  if (m[1] === "") {
+    // Sufixo: os últimos N bytes.
+    const n = Number(m[2]);
+    if (n === 0) return "unsatisfiable";
+    start = Math.max(0, size - n);
+    end = size - 1;
+  } else {
+    start = Number(m[1]);
+    end = m[2] === "" ? size - 1 : Math.min(Number(m[2]), size - 1);
+  }
+  if (start >= size || start > end) return "unsatisfiable";
+  return { start, end };
+}

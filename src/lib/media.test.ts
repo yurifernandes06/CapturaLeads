@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extFromMime, isInlineSafe, isValidMediaKey, mediaKey, mimeFromKey } from "./media";
+import { extFromMime, isInlineSafe, isValidMediaKey, mediaKey, mimeFromKey, parseRange } from "./media";
 
 const ID = "3f2b8a1c-1d2e-4f5a-9b8c-7d6e5f4a3b2c";
 
@@ -30,5 +30,27 @@ describe("tipos", () => {
     expect(isInlineSafe("image/png")).toBe(true);
     expect(isInlineSafe("image/svg+xml")).toBe(false);
     expect(isInlineSafe("text/html")).toBe(false);
+  });
+});
+
+describe("parseRange", () => {
+  it("lê intervalo aberto, fechado e sufixo", () => {
+    expect(parseRange("bytes=0-", 100)).toEqual({ start: 0, end: 99 });
+    expect(parseRange("bytes=0-1", 100)).toEqual({ start: 0, end: 1 });
+    expect(parseRange("bytes=10-500", 100)).toEqual({ start: 10, end: 99 });
+    expect(parseRange("bytes=-10", 100)).toEqual({ start: 90, end: 99 });
+  });
+
+  it("ignora cabeçalho ausente ou malformado", () => {
+    expect(parseRange(null, 100)).toBeNull();
+    expect(parseRange("bytes=-", 100)).toBeNull();
+    expect(parseRange("bytes=0-1,5-6", 100)).toBeNull();
+    expect(parseRange("items=0-1", 100)).toBeNull();
+  });
+
+  it("recusa intervalo fora do arquivo", () => {
+    expect(parseRange("bytes=100-", 100)).toBe("unsatisfiable");
+    expect(parseRange("bytes=5-2", 100)).toBe("unsatisfiable");
+    expect(parseRange("bytes=-0", 100)).toBe("unsatisfiable");
   });
 });
