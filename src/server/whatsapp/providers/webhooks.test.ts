@@ -18,7 +18,7 @@ const cloudPayload = JSON.stringify({
             contacts: [{ wa_id: "5511987654321", profile: { name: "Ana Souza" } }],
             messages: [
               { from: "5511987654321", id: "wamid.1", timestamp: "1762600000", type: "text", text: { body: "Oi!" } },
-              { from: "5511987654321", id: "wamid.2", timestamp: "1762600001", type: "image", image: { caption: "orçamento" } },
+              { from: "5511987654321", id: "wamid.2", timestamp: "1762600001", type: "image", image: { id: "media-9", mime_type: "image/jpeg", caption: "orçamento" } },
             ],
           },
         },
@@ -38,6 +38,8 @@ describe("Cloud API webhook", async () => {
     expect(msgs).toHaveLength(2);
     expect(msgs[0]).toMatchObject({ from: "5511987654321", name: "Ana Souza", text: "Oi!", providerMessageId: "wamid.1" });
     expect(msgs[1]!.text).toBe("📷 Imagem: orçamento");
+    expect(msgs[1]!.media).toEqual({ kind: "image", ref: "media-9", mimeType: "image/jpeg", caption: "orçamento", fileName: undefined });
+    expect(msgs[0]!.media).toBeUndefined();
   });
 
   it("rejeita assinatura inválida", async () => {
@@ -65,6 +67,15 @@ describe("Evolution API webhook", async () => {
     expect(msgs).toEqual([
       expect.objectContaining({ from: "551187654321", name: "Bruno", text: "Tem desconto?", fromMe: false }),
     ]);
+  });
+
+  it("extrai anexo com base64 embutido e o decodifica sem chamar a API", async () => {
+    const message = { audioMessage: { mimetype: "audio/ogg; codecs=opus" }, base64: Buffer.from("OggS").toString("base64") };
+    const [msg] = await evolutionProvider.parseWebhook(new Request("http://x?token=hook-token"), body({ message }));
+    expect(msg).toMatchObject({ text: "🎤 Áudio", media: { kind: "audio", ref: "ABC", mimeType: "audio/ogg; codecs=opus" } });
+    const file = await evolutionProvider.downloadMedia(msg!.media!);
+    expect(Buffer.from(file.data).toString()).toBe("OggS");
+    expect(file.mimeType).toBe("audio/ogg; codecs=opus");
   });
 
   it("ignora grupos", async () => {
