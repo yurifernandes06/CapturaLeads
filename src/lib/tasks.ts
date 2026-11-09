@@ -53,3 +53,20 @@ export function suggestedDueAt(now: number, timezone: string, startTime = "09:00
   const [h, m] = startTime.split(":").map(Number) as [number, number];
   return new TZDate(d.getFullYear(), d.getMonth(), d.getDate() + 1, h, m, timezone).getTime();
 }
+
+/** Prazo legível no fuso: "hoje 14:00", "amanhã 09:00", "ontem 18:00", "12/11 09:00", "12/11/2027 09:00". */
+export function formatDue(dueAt: number, now: number, timezone: string): string {
+  const due = new TZDate(dueAt, timezone);
+  const today = new TZDate(now, timezone);
+  const time = `${pad(due.getHours())}:${pad(due.getMinutes())}`;
+  const dayDiff = Math.round(
+    (Date.UTC(due.getFullYear(), due.getMonth(), due.getDate()) -
+      Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) /
+      86_400_000,
+  );
+  if (dayDiff === 0) return `hoje ${time}`;
+  if (dayDiff === 1) return `amanhã ${time}`;
+  if (dayDiff === -1) return `ontem ${time}`;
+  const date = `${pad(due.getDate())}/${pad(due.getMonth() + 1)}`;
+  return due.getFullYear() === today.getFullYear() ? `${date} ${time}` : `${date}/${due.getFullYear()} ${time}`;
+}

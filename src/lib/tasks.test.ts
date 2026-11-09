@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { endOfDay, parseLocalDateTime, suggestedDueAt, taskBucket, toLocalDateTime } from "./tasks";
+import { endOfDay, formatDue, parseLocalDateTime, suggestedDueAt, taskBucket, toLocalDateTime } from "./tasks";
 
 const TZ = "America/Sao_Paulo"; // UTC-3, sem horário de verão
 const at = (iso: string) => new Date(iso).getTime();
@@ -47,5 +47,18 @@ describe("parseLocalDateTime", () => {
 describe("suggestedDueAt", () => {
   it("sugere amanhã no início do expediente", () => {
     expect(suggestedDueAt(at("2026-11-10T22:30:00-03:00"), TZ, "08:00")).toBe(at("2026-11-11T08:00:00-03:00"));
+  });
+});
+
+describe("formatDue", () => {
+  const now = at("2026-11-10T13:00:00-03:00");
+  it("usa hoje/amanhã/ontem perto da data atual", () => {
+    expect(formatDue(at("2026-11-10T22:30:00-03:00"), now, TZ)).toBe("hoje 22:30");
+    expect(formatDue(at("2026-11-11T09:00:00-03:00"), now, TZ)).toBe("amanhã 09:00");
+    expect(formatDue(at("2026-11-09T18:00:00-03:00"), now, TZ)).toBe("ontem 18:00");
+  });
+  it("mostra a data, com ano só quando muda", () => {
+    expect(formatDue(at("2026-11-20T09:00:00-03:00"), now, TZ)).toBe("20/11 09:00");
+    expect(formatDue(at("2027-01-05T09:00:00-03:00"), now, TZ)).toBe("05/01/2027 09:00");
   });
 });

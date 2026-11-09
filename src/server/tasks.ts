@@ -1,10 +1,33 @@
 import "server-only";
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, lt } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { endOfDay } from "@/lib/tasks";
+import type { TaskView } from "@/components/tasks/task-list";
+import { endOfDay, formatDue, taskBucket } from "@/lib/tasks";
 import type { CurrentUser } from "@/server/auth/dal";
 
 const t = schema.tasks;
+
+/** Concluir, reabrir ou excluir: o responsável, quem criou ou um admin. */
+export const canEditTask = (task: Pick<schema.Task, "assigneeId" | "createdById">, user: CurrentUser) =>
+  user.role === "admin" || task.assigneeId === user.id || task.createdById === user.id;
+
+/** Linha do banco → props serializáveis da lista (prazo já formatado no fuso). */
+export function toTaskView(
+  task: schema.Task,
+  ctx: { now: number; timezone: string; user: CurrentUser },
+  extra: Pick<TaskView, "lead" | "assigneeName"> = {},
+): TaskView {
+  const due = task.dueAt.getTime();
+  return {
+    id: task.id,
+    title: task.title,
+    due: formatDue(due, ctx.now, ctx.timezone),
+    bucket: taskBucket(due, ctx.now, ctx.timezone),
+    done: Boolean(task.doneAt),
+    canEdit: canEditTask(task, ctx.user),
+    ...extra,
+  };
+}
 
 /** Tarefas de um lead: abertas por prazo, depois as concluídas mais recentes. */
 export async function listLeadTasks(leadId: string) {
@@ -55,12 +78,10 @@ export async function createTask(input: {
   return row!;
 }
 
-/** Concluir/reabrir: o responsável, quem criou ou um admin. */
 async function loadEditable(id: string, user: CurrentUser) {
   const task = await db.select().from(t).where(eq(t.id, id)).get();
   if (!task) throw new Error("Tarefa não encontrada.");
-  const allowed = user.role === "admin" || task.assigneeId === user.id || task.createdById === user.id;
-  if (!allowed) throw new Error("Você não pode alterar esta tarefa.");
+  if (!canEditTask(task, user)) throw new Error("Você não pode alterar esta tarefa.");
   return task;
 }
 
