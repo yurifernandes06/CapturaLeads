@@ -1,18 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/app/page-skeletons";
 
-export default function Loading() {
-  return (
-    <div aria-busy className="grid gap-6">
-      <div className="grid gap-2">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-4 w-72" />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-96 rounded-xl" />
-    </div>
-  );
-}
+/** Carregamento inicial do app (antes do layout). Navegações usam o loading de cada rota. */
+export default DashboardSkeleton;
