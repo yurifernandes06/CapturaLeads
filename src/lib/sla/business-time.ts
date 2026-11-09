@@ -1,5 +1,6 @@
 import { TZDate } from "@date-fns/tz";
 import type { SlaConfig } from "./config";
+import { holidayOn } from "./holidays";
 
 /**
  * Aritmética de tempo útil. Todo cálculo acontece no fuso configurado,
@@ -7,7 +8,7 @@ import type { SlaConfig } from "./config";
  * às 08:10 de segunda, e não às 18:10.
  */
 
-type Schedule = Pick<SlaConfig, "timezone" | "businessHours">;
+type Schedule = Pick<SlaConfig, "timezone" | "businessHours"> & Partial<Pick<SlaConfig, "holidays">>;
 
 const MIN = 60_000;
 const MAX_DAYS = 400; // trava de segurança contra loops
@@ -20,7 +21,7 @@ function dayWindow(y: number, m: number, d: number, s: Schedule) {
   const start = new TZDate(y, m, d, sh, sm, s.timezone).getTime();
   const end = new TZDate(y, m, d, eh, em, s.timezone).getTime();
   const weekday = new TZDate(y, m, d, 12, 0, s.timezone).getDay();
-  return { start, end, open: s.businessHours.days.includes(weekday) };
+  return { start, end, open: s.businessHours.days.includes(weekday) && !holidayOn(y, m, d, s.holidays) };
 }
 
 function* windowsFrom(from: number, s: Schedule) {
