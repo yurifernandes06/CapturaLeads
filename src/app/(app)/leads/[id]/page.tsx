@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { LiveRefresh } from "@/components/app/live-refresh";
 import { PriorityBadge, WhatsAppIcon } from "@/components/leads/badges";
 import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Timeline } from "@/components/leads/timeline";
@@ -49,6 +50,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
 
   return (
     <div className="grid gap-6">
+      <LiveRefresh lead={lead.id} />
       <div>
         <Link
           href="/leads"
