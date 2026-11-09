@@ -1,4 +1,6 @@
 import { TZDate } from "@date-fns/tz";
+import { isBusinessTime } from "./sla/business-time";
+import type { SlaConfig } from "./sla/config";
 
 /**
  * Regras puras de tarefas: em que grupo uma tarefa cai ("atrasada", "hoje",
@@ -69,4 +71,18 @@ export function formatDue(dueAt: number, now: number, timezone: string): string 
   if (dayDiff === -1) return `ontem ${time}`;
   const date = `${pad(due.getDate())}/${pad(due.getMonth() + 1)}`;
   return due.getFullYear() === today.getFullYear() ? `${date} ${time}` : `${date}/${due.getFullYear()} ${time}`;
+}
+
+/**
+ * Lembrete de tarefa: uma vez só, depois do prazo, e apenas em horário comercial
+ * (tarefa que vence no fim de semana avisa na abertura do próximo dia útil).
+ */
+export function shouldRemind(
+  task: { dueAt: number; doneAt: number | null; remindedAt: number | null },
+  now: number,
+  schedule: Pick<SlaConfig, "timezone" | "businessHours" | "holidays">,
+): boolean {
+  if (task.doneAt !== null || task.remindedAt !== null) return false;
+  if (task.dueAt > now) return false;
+  return isBusinessTime(new Date(now), schedule);
 }

@@ -122,6 +122,9 @@ export const activities = sqliteTable(
 export type Lead = typeof leads.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 
+export const NOTIFICATION_TYPES = ["sla_breach", "sla_at_risk", "new_lead", "new_message", "task_due"] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
 export const notifications = sqliteTable(
   "notifications",
   {
@@ -130,7 +133,7 @@ export const notifications = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     leadId: text("lead_id").references(() => leads.id, { onDelete: "cascade" }),
-    type: text("type", { enum: ["sla_breach", "sla_at_risk", "new_lead", "new_message"] }).notNull(),
+    type: text("type", { enum: NOTIFICATION_TYPES }).notNull(),
     title: text("title").notNull(),
     body: text("body"),
     readAt: timestamp("read_at"),
@@ -176,6 +179,8 @@ export const tasks = sqliteTable(
     title: text("title").notNull(),
     dueAt: timestamp("due_at").notNull(),
     doneAt: timestamp("done_at"),
+    /** Quando o lembrete de vencimento foi enviado (um por tarefa). */
+    remindedAt: timestamp("reminded_at"),
     createdAt: createdAt(),
   },
   (t) => [index("tasks_assignee_idx").on(t.assigneeId, t.doneAt, t.dueAt), index("tasks_lead_idx").on(t.leadId)],

@@ -5,6 +5,7 @@ import { OPEN_STAGES } from "@/lib/leads";
 import { SLA_KIND_LABEL, type SlaConfig } from "@/lib/sla/config";
 import { evaluateSla } from "@/lib/sla/engine";
 import { getSetting } from "@/server/settings";
+import { remindDueTasks } from "@/server/tasks";
 import { sendSlaAlert } from "@/server/whatsapp/service";
 
 /**
@@ -77,7 +78,7 @@ async function notifyBreach(lead: schema.Lead, config: SlaConfig) {
   }
 }
 
-let sweeping: Promise<{ updated: number; breached: number }> | null = null;
+let sweeping: Promise<{ updated: number; breached: number; reminded: number }> | null = null;
 let lastSweepAt = 0;
 
 /** Recalcula o SLA de todos os leads abertos e dispara alertas. Idempotente. */
@@ -100,10 +101,15 @@ export function sweepSla() {
           await notifyBreach({ ...lead, ...patch }, config);
         }
       }
+      // Mesmo relógio, mesmo horário comercial: lembretes de tarefas vencidas.
+      const reminded = await remindDueTasks(config, now.getTime()).catch((err) => {
+        console.error("[tasks] falha nos lembretes", err);
+        return 0;
+      });
       // Faxina: sessões expiradas.
       await db.delete(schema.sessions).where(lt(schema.sessions.expiresAt, now));
       lastSweepAt = Date.now();
-      return { updated, breached };
+      return { updated, breached, reminded };
     } finally {
       sweeping = null;
     }

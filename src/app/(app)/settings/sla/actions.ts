@@ -37,6 +37,7 @@ export async function saveSlaConfig(_prev: ActionResult, formData: FormData): Pr
       followUpHours: int(formData.get("followUpHours")),
       atRiskPercent: int(formData.get("atRiskPercent")),
       whatsappAlerts: formData.get("whatsappAlerts") === "on",
+      taskWhatsappReminders: formData.get("taskWhatsappReminders") === "on",
     });
     await setSetting("sla", config);
     // Prazos mudaram: recalcula todos os leads abertos na hora.
