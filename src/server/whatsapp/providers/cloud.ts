@@ -2,8 +2,9 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { env } from "@/lib/env";
+import type { MediaKind } from "@/lib/media";
 import { normalizePhone } from "@/lib/phone";
-import { WebhookAuthError, WhatsAppSendError, type InboundMessage, type WhatsAppProvider } from "../types";
+import { WebhookAuthError, WhatsAppSendError, type InboundMedia, type InboundMessage, type WhatsAppProvider } from "../types";
 
 /**
  * Meta WhatsApp Cloud API (oficial).
@@ -53,6 +54,16 @@ function messageText(m: Record<string, unknown> & { type: string }): string {
     interactive: "Resposta interativa",
   };
   return [labels[m.type] ?? `[${m.type}]`, caption].filter(Boolean).join(": ");
+}
+
+const MEDIA_TYPES: MediaKind[] = ["image", "audio", "video", "document", "sticker"];
+
+/** Anexo do payload da Meta: `{ type: "image", image: { id, mime_type, caption } }`. */
+function mediaOf(m: Record<string, unknown> & { type: string }): InboundMedia | undefined {
+  if (!MEDIA_TYPES.includes(m.type as MediaKind)) return undefined;
+  const raw = m[m.type] as { id?: string; mime_type?: string; filename?: string; caption?: string } | undefined;
+  if (!raw?.id) return undefined;
+  return { kind: m.type as MediaKind, ref: raw.id, mimeType: raw.mime_type, fileName: raw.filename, caption: raw.caption };
 }
 
 export const cloudProvider: WhatsAppProvider = {
@@ -131,10 +142,29 @@ export const cloudProvider: WhatsAppProvider = {
             text: messageText(m),
             providerMessageId: m.id,
             at: new Date(Number(m.timestamp) * 1000),
+            media: mediaOf(m),
           });
         }
       }
     }
     return out;
+  },
+
+  /** Dois passos: o id vira uma URL temporária (Graph API), baixada com o mesmo token. */
+  async downloadMedia(media) {
+    const e = env();
+    const auth = { Authorization: `Bearer ${e.WHATSAPP_CLOUD_TOKEN}` };
+    const meta = await fetch(`https://graph.facebook.com/${e.WHATSAPP_CLOUD_API_VERSION}/${encodeURIComponent(media.ref)}`, {
+      headers: auth,
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!meta.ok) throw new Error(`Meta: falha ao localizar mídia (HTTP ${meta.status}).`);
+    const { url, mime_type } = (await meta.json()) as { url: string; mime_type?: string };
+    const file = await fetch(url, { headers: auth, signal: AbortSignal.timeout(60_000) });
+    if (!file.ok) throw new Error(`Meta: falha ao baixar mídia (HTTP ${file.status}).`);
+    return {
+      data: new Uint8Array(await file.arrayBuffer()),
+      mimeType: mime_type ?? media.mimeType ?? file.headers.get("content-type") ?? "application/octet-stream",
+    };
   },
 };

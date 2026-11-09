@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { PageHeader } from "@/components/app/page-header";
 import { WhatsAppIcon } from "@/components/leads/badges";
+import { MessageMedia, mediaFromMeta } from "@/components/leads/message-media";
 import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, formatRelative, initials } from "@/lib/format";
@@ -147,6 +148,9 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
                   {messages.length ? (
                     messages.map((m) => {
                       const out = m.type === "whatsapp_out";
+                      const media = mediaFromMeta(m.meta);
+                      // Com anexo, a legenda substitui o rótulo ("📷 Imagem: …").
+                      const text = media ? media.caption : m.body;
                       return (
                         <li key={m.id} className={cn("flex", out ? "justify-end" : "justify-start")}>
                           <div
@@ -155,7 +159,8 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
                               out ? "rounded-tr-sm bg-whatsapp/15" : "rounded-tl-sm bg-card",
                             )}
                           >
-                            <p className="break-words whitespace-pre-wrap">{m.body}</p>
+                            {media ? <MessageMedia media={media} className={text ? "mb-1.5" : undefined} /> : null}
+                            {text ? <p className="break-words whitespace-pre-wrap">{text}</p> : null}
                             <p className="mt-1 text-right text-[11px] text-muted-foreground">
                               {out && m.userName ? `${m.userName.split(" ")[0]} · ` : ""}
                               <time dateTime={m.createdAt.toISOString()} title={formatDateTime(m.createdAt)}>
