@@ -12,14 +12,17 @@ import { formatCurrency, formatDateTime, formatDuration, formatRelative } from "
 import { SOURCE_LABEL } from "@/lib/leads";
 import { formatPhone, whatsappLink } from "@/lib/phone";
 import { evaluateSla } from "@/lib/sla/engine";
+import { suggestedDueAt, toLocalDateTime } from "@/lib/tasks";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { getLead, listOwners } from "@/server/leads/queries";
 import { getSetting } from "@/server/settings";
+import { listLeadTasks, toTaskView } from "@/server/tasks";
 import { whatsapp } from "@/server/whatsapp";
 import { ActivityComposer } from "./activity-composer";
 import { DeleteLeadButton, EditLeadButton, OwnerSelect, StageControl } from "./lead-controls";
+import { LeadTasks } from "./lead-tasks";
 import { WhatsAppComposer } from "./whatsapp-composer";
 
 export const metadata: Metadata = { title: "Lead" };
@@ -27,11 +30,12 @@ export const metadata: Metadata = { title: "Lead" };
 export default async function LeadPage(props: PageProps<"/leads/[id]">) {
   const user = await requireUser();
   const { id } = await props.params;
-  const [data, owners, slaConfig, templates] = await Promise.all([
+  const [data, owners, slaConfig, templates, taskRows] = await Promise.all([
     getLead(id),
     listOwners(),
     getSetting("sla"),
     getSetting("whatsappTemplates"),
+    listLeadTasks(id),
   ]);
   if (!data) notFound();
 
@@ -40,6 +44,8 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
   const ownerMap = new Map(owners.map((o) => [o.id, o.name]));
   const firstName = lead.name.split(" ")[0];
   const sla = evaluateSla(lead, slaConfig, new Date(now));
+  const tz = slaConfig.timezone;
+  const tasks = taskRows.map(({ task, assigneeName }) => toTaskView(task, { now, timezone: tz, user }, { assigneeName }));
 
   return (
     <div className="grid gap-6">
@@ -160,6 +166,21 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
               ) : (
                 <p className="text-muted-foreground">Lead fechado, sem SLA ativo.</p>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tarefas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LeadTasks
+                leadId={lead.id}
+                tasks={tasks}
+                defaultDue={toLocalDateTime(suggestedDueAt(now, tz, slaConfig.businessHours.start), tz)}
+                currentUserId={user.id}
+                owners={owners.filter((o) => o.active).map(({ id, name }) => ({ id, name }))}
+              />
             </CardContent>
           </Card>
 
