@@ -77,3 +77,15 @@ export async function countAwaiting(userId: string) {
     .where(and(eq(l.ownerId, userId), awaitingSql()));
   return row?.n ?? 0;
 }
+
+/**
+ * "Versão" das conversas para o polling da tela: muda quando entra ou sai qualquer
+ * atividade (do lead, se informado). Barato: um max() em coluna indexada.
+ */
+export async function conversationVersion(leadId?: string) {
+  const [row] = await db
+    .select({ v: max(a.createdAt), n: count() })
+    .from(a)
+    .where(leadId ? eq(a.leadId, leadId) : inArray(a.type, [...MESSAGE_TYPES]));
+  return `${row?.v?.getTime() ?? 0}.${row?.n ?? 0}`;
+}

@@ -1,6 +1,7 @@
 import { ArrowLeftIcon, ExternalLinkIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LiveRefresh } from "@/components/app/live-refresh";
 import { PageHeader } from "@/components/app/page-header";
 import { WhatsAppIcon } from "@/components/leads/badges";
 import { SlaIndicator } from "@/components/leads/sla-indicator";
@@ -45,6 +46,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
 
   return (
     <div className="grid gap-6">
+      <LiveRefresh />
       <PageHeader title="Inbox" description="Conversas de WhatsApp com os leads, da mais recente para a mais antiga." />
 
       <div className="grid h-[calc(100svh-13rem)] min-h-[28rem] overflow-hidden rounded-xl border bg-card lg:grid-cols-[22rem_minmax(0,1fr)]">
