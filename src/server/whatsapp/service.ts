@@ -1,8 +1,10 @@
 import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
+import type { StoredMedia } from "@/lib/media";
 import { formatPhone } from "@/lib/phone";
 import { createLead, findLeadByPhone, recordActivity } from "@/server/leads/service";
+import { saveMedia } from "@/server/media/storage";
 import { whatsapp } from "./index";
 import type { InboundMessage } from "./types";
 
@@ -26,9 +28,29 @@ async function notify(userId: string | null, leadId: string, type: "new_lead" | 
   await db.insert(schema.notifications).values({ userId, leadId, type, title, body: body?.slice(0, 140) ?? null });
 }
 
+/**
+ * Baixa o anexo do provedor e guarda no storage. Falha não derruba a mensagem:
+ * ela entra só com o rótulo ("📷 Imagem") e o erro vai para o log.
+ */
+async function storeInboundMedia(msg: InboundMessage): Promise<StoredMedia | undefined> {
+  if (!msg.media) return undefined;
+  try {
+    const file = await whatsapp().downloadMedia(msg.media);
+    const saved = await saveMedia(file.data, file.mimeType);
+    return { ...saved, kind: msg.media.kind, fileName: msg.media.fileName, caption: msg.media.caption };
+  } catch (err) {
+    console.error("[whatsapp] falha ao baixar mídia", err);
+    return undefined;
+  }
+}
+
 export async function handleInbound(msg: InboundMessage) {
   if (!msg.from || (await alreadyProcessed(msg.providerMessageId))) return { skipped: true as const };
-  const meta = msg.providerMessageId ? { providerMessageId: msg.providerMessageId } : undefined;
+  const media = await storeInboundMedia(msg);
+  const meta =
+    msg.providerMessageId || media
+      ? { ...(msg.providerMessageId && { providerMessageId: msg.providerMessageId }), ...(media && { media }) }
+      : undefined;
 
   // Mensagem enviada pelo celular da empresa: conta como contato do time.
   if (msg.fromMe) {

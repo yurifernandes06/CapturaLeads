@@ -14,7 +14,7 @@ import { MAX_MEDIA_BYTES, baseMime, isValidMediaKey, mediaKey, mimeFromKey } fro
  */
 const LOCAL_ROOT = path.join(process.cwd(), "data", "media");
 
-const useBlob = () => {
+const blobEnabled = () => {
   const e = env();
   return Boolean(e.BLOB_READ_WRITE_TOKEN || e.BLOB_STORE_ID);
 };
@@ -24,7 +24,7 @@ export async function saveMedia(data: Uint8Array, mimeType: string) {
   const mime = baseMime(mimeType) || "application/octet-stream";
   const key = mediaKey(new Date(), randomUUID(), mime);
 
-  if (useBlob()) {
+  if (blobEnabled()) {
     await put(key, Buffer.from(data), { access: "private", contentType: mime, addRandomSuffix: false });
   } else {
     const file = path.join(LOCAL_ROOT, key);
@@ -37,7 +37,7 @@ export async function saveMedia(data: Uint8Array, mimeType: string) {
 export async function readMedia(key: string): Promise<{ body: BodyInit; contentType: string; size?: number } | null> {
   if (!isValidMediaKey(key)) return null;
 
-  if (useBlob()) {
+  if (blobEnabled()) {
     const res = await get(key, { access: "private" });
     if (!res || res.statusCode !== 200) return null;
     return { body: res.stream, contentType: res.blob.contentType, size: res.blob.size };
