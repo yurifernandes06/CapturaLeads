@@ -1,6 +1,13 @@
 "use client";
 
-import { KanbanSquareIcon, LayoutDashboardIcon, SettingsIcon, UsersRoundIcon, type LucideIcon } from "lucide-react";
+import {
+  KanbanSquareIcon,
+  LayoutDashboardIcon,
+  ListTodoIcon,
+  SettingsIcon,
+  UsersRoundIcon,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,12 +18,16 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/leads", label: "Leads", icon: UsersRoundIcon },
   { href: "/pipeline", label: "Pipeline", icon: KanbanSquareIcon },
+  { href: "/tasks", label: "Tarefas", icon: ListTodoIcon },
   { href: "/settings", label: "Configurações", icon: SettingsIcon },
 ];
 
-export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+/** Contadores por rota (ex.: tarefas que vencem hoje). */
+export type NavBadges = Partial<Record<string, number>>;
+
+export function NavLinks({ onNavigate, badges }: { onNavigate?: () => void; badges?: NavBadges }) {
   const pathname = usePathname();
-  return <NavList pathname={pathname} onNavigate={onNavigate} />;
+  return <NavList pathname={pathname} onNavigate={onNavigate} badges={badges} />;
 }
 
 /** Fallback sem estado ativo, usado no static shell enquanto a URL não é conhecida. */
@@ -24,11 +35,12 @@ export function NavLinksFallback() {
   return <NavList pathname="" />;
 }
 
-function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavList({ pathname, onNavigate, badges }: { pathname: string; onNavigate?: () => void; badges?: NavBadges }) {
   return (
     <nav className="grid gap-0.5">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
+        const badge = badges?.[href];
         return (
           <Link
             key={href}
@@ -47,6 +59,14 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
               )}
             />
             {label}
+            {badge ? (
+              <span
+                className="ml-auto min-w-5 rounded-full bg-primary px-1.5 text-center text-xs leading-5 font-semibold text-primary-foreground tabular"
+                aria-label={`${badge} pendentes`}
+              >
+                {badge > 99 ? "99+" : badge}
+              </span>
+            ) : null}
           </Link>
         );
       })}

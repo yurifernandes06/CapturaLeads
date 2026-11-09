@@ -5,9 +5,9 @@ import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { NavLinks } from "./nav";
+import { NavLinks, type NavBadges } from "./nav";
 
-export function MobileNav() {
+export function MobileNav({ badges }: { badges?: NavBadges }) {
   const [open, setOpen] = useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -17,7 +17,7 @@ export function MobileNav() {
       <SheetContent side="left" className="w-72 bg-sidebar p-4 text-sidebar-foreground">
         <SheetTitle className="sr-only">Menu</SheetTitle>
         <Logo className="mb-6 px-2 text-sidebar-accent-foreground" />
-        <NavLinks onNavigate={() => setOpen(false)} />
+        <NavLinks onNavigate={() => setOpen(false)} badges={badges} />
       </SheetContent>
     </Sheet>
   );

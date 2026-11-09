@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import { MobileNav } from "@/components/app/mobile-nav";
-import { NavLinks, NavLinksFallback } from "@/components/app/nav";
+import { NavLinks, NavLinksFallback, type NavBadges } from "@/components/app/nav";
 import { NotificationBell } from "@/components/app/notification-bell";
 import { UserMenu } from "@/components/app/user-menu";
 import { Logo } from "@/components/logo";
@@ -10,6 +10,8 @@ import { formatRelative } from "@/lib/format";
 import { requireUser } from "@/server/auth/dal";
 import { requestNow } from "@/server/clock";
 import { listNotifications } from "@/server/notifications";
+import { getSetting } from "@/server/settings";
+import { countDueTasks } from "@/server/tasks";
 
 async function CurrentUserMenu() {
   const user = await requireUser();
@@ -34,6 +36,21 @@ async function CurrentUserMenu() {
   );
 }
 
+/** Sidebar e menu mobile pedem os mesmos contadores: uma consulta por request. */
+const navBadges = cache(async (): Promise<NavBadges> => {
+  const user = await requireUser();
+  const { timezone } = await getSetting("sla");
+  return { "/tasks": await countDueTasks(user.id, requestNow(), timezone) };
+});
+
+async function SidebarNav() {
+  return <NavLinks badges={await navBadges()} />;
+}
+
+async function MobileNavWithBadges() {
+  return <MobileNav badges={await navBadges()} />;
+}
+
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-svh">
@@ -42,13 +59,15 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <Logo className="text-sidebar-accent-foreground" />
         </Link>
         <Suspense fallback={<NavLinksFallback />}>
-          <NavLinks />
+          <SidebarNav />
         </Suspense>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-6">
-          <MobileNav />
+          <Suspense fallback={<MobileNav />}>
+            <MobileNavWithBadges />
+          </Suspense>
           <div className="flex min-w-0 flex-1 items-center gap-2" />
           <Suspense fallback={<Skeleton className="h-8 w-40" />}>
             <CurrentUserMenu />
