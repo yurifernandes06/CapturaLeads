@@ -60,7 +60,7 @@ export async function listConversations({ filter, userId, limit = 100 }: { filte
 /** Mensagens de WhatsApp de um lead, em ordem cronológica (últimas 200). */
 export async function listMessages(leadId: string) {
   const rows = await db
-    .select({ id: a.id, type: a.type, body: a.body, createdAt: a.createdAt, userName: schema.users.name })
+    .select({ id: a.id, type: a.type, body: a.body, meta: a.meta, createdAt: a.createdAt, userName: schema.users.name })
     .from(a)
     .leftJoin(schema.users, eq(a.userId, schema.users.id))
     .where(and(eq(a.leadId, leadId), inArray(a.type, [...MESSAGE_TYPES])))

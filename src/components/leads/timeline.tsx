@@ -13,6 +13,7 @@ import { formatDateTime, formatRelative } from "@/lib/format";
 import { SOURCE_LABEL, STAGE_META, type ActivityType, type Source, type Stage } from "@/lib/leads";
 import { cn } from "@/lib/utils";
 import { WhatsAppIcon } from "./badges";
+import { MessageMedia, mediaFromMeta } from "./message-media";
 
 type Item = { activity: Activity; userName: string | null };
 
@@ -67,6 +68,8 @@ export function Timeline({ items, owners, now }: { items: Item[]; owners: Map<st
         const { icon: Icon, className } = ICONS[a.type];
         const showBody = a.body && !["system", "sla_breach"].includes(a.type);
         const isMessage = a.type === "whatsapp_in" || a.type === "whatsapp_out";
+        const media = isMessage ? mediaFromMeta(a.meta) : null;
+        const body = media ? media.caption : a.body;
         return (
           <li key={a.id} className="relative flex gap-3">
             <span className={cn("relative z-10 grid size-8 shrink-0 place-items-center rounded-full ring-4 ring-card", className)}>
@@ -79,7 +82,8 @@ export function Timeline({ items, owners, now }: { items: Item[]; owners: Map<st
                   {formatRelative(a.createdAt, now)}
                 </time>
               </div>
-              {showBody ? (
+              {media ? <MessageMedia media={media} className="mt-1.5" /> : null}
+              {showBody && body ? (
                 <p
                   className={cn(
                     "mt-1.5 text-sm whitespace-pre-wrap",
@@ -91,7 +95,7 @@ export function Timeline({ items, owners, now }: { items: Item[]; owners: Map<st
                       : "text-muted-foreground",
                   )}
                 >
-                  {a.body}
+                  {body}
                 </p>
               ) : null}
             </div>
