@@ -110,9 +110,10 @@ O passo a passo de cada provedor e a URL do webhook aparecem em **Configuraçõe
 
 ## Deploy
 
-1. Banco: crie um banco no [Turso](https://turso.tech) e defina `DATABASE_URL=libsql://…` e `DATABASE_AUTH_TOKEN`. Depois rode `npm run db:push`.
-2. Defina `APP_URL`, `CRON_SECRET`, `PUBLIC_API_KEY` e as variáveis do provedor de WhatsApp.
-3. **SLA em serverless (Vercel):** defina `SLA_INTERNAL_TICK=false` e chame `GET /api/cron/sla` a cada 1–5 min com `Authorization: Bearer $CRON_SECRET` (Vercel Cron no plano Pro, ou um agendador externo). Em VPS/Docker, o tick interno já resolve.
+Guia completo (Vercel + Turso ou VPS, agendador do SLA, primeiro admin e backup): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
+Resumo: banco no Turso → `npm run db:push` → `npm run admin:create` → variáveis na Vercel com
+`SLA_INTERNAL_TICK=false` → agendador chamando `/api/cron/sla` (workflow `sla-cron.yml` grátis).
 
 ## Scripts
 
@@ -126,4 +127,5 @@ O passo a passo de cada provedor e a URL do webhook aparecem em **Configuraçõe
 | `npm run db:push` | Sincroniza o schema com o banco |
 | `npm run db:studio` | Abre o Drizzle Studio |
 | `npm run db:seed` | Dados de demonstração (idempotente) |
+| `npm run admin:create -- email "Nome" senha` | Cria ou promove um admin (produção) |
 | `npm run setup` | `db:push` + `db:seed` |
