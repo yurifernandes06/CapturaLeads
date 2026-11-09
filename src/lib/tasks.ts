@@ -73,6 +73,14 @@ export function formatDue(dueAt: number, now: number, timezone: string): string 
   return due.getFullYear() === today.getFullYear() ? `${date} ${time}` : `${date}/${due.getFullYear()} ${time}`;
 }
 
+/** Tarefa vencida há mais que isso não gera lembrete (ex.: backlog no 1º tick após o deploy). */
+export const STALE_REMINDER_MS = 3 * 24 * 60 * 60 * 1000;
+
+/** Vencida há tempo demais para ainda valer um aviso: só marca como lembrada. */
+export function isStaleReminder(dueAt: number, now: number): boolean {
+  return now - dueAt > STALE_REMINDER_MS;
+}
+
 /**
  * Lembrete de tarefa: uma vez só, depois do prazo, e apenas em horário comercial
  * (tarefa que vence no fim de semana avisa na abertura do próximo dia útil).
