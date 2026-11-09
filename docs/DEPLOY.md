@@ -38,20 +38,22 @@ npm run admin:create -- voce@empresa.com "Seu Nome" "senha-forte"
 | `WHATSAPP_PROVIDER` e variáveis do provedor | sim | ver README → Configuração do WhatsApp |
 | `WHATSAPP_WEBHOOK_TOKEN` | Evolution | token na query do webhook |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | não | rate limit compartilhado entre instâncias |
+| `BLOB_READ_WRITE_TOKEN` ou `BLOB_STORE_ID` | Vercel | mídia do WhatsApp em store **privado** do Vercel Blob; sem isso grava em `data/media` (só VPS) |
 
 ## 3a. Vercel
 
 1. Importe o repositório na Vercel (framework detectado: Next.js).
 2. Cadastre as variáveis do passo 2 (Production e Preview).
-3. Opcional: adicione **Upstash Redis** pelo Marketplace da Vercel e copie as variáveis REST.
-4. **Agendador do SLA** — escolha um:
+3. Para mídia do WhatsApp (fotos, áudios, documentos): em **Storage → Blob**, crie um store com acesso **Private** e conecte ao projeto — as credenciais entram sozinhas.
+4. Opcional: adicione **Upstash Redis** pelo Marketplace da Vercel e copie as variáveis REST.
+5. **Agendador do SLA** — escolha um:
    - **GitHub Actions (grátis):** em *Settings → Secrets and variables → Actions*, crie `APP_URL` e
      `CRON_SECRET`. O workflow `.github/workflows/sla-cron.yml` chama a rota a cada ~5 min.
    - **Vercel Cron (plano Pro):** crie `vercel.json` com
      `{"crons":[{"path":"/api/cron/sla","schedule":"*/5 * * * *"}]}`. A Vercel envia
      `Authorization: Bearer $CRON_SECRET` automaticamente.
    - **cron-job.org** ou similar: `GET $APP_URL/api/cron/sla` com o header `Authorization`.
-5. Configure o webhook do WhatsApp com a URL mostrada em **Configurações → WhatsApp**.
+6. Configure o webhook do WhatsApp com a URL mostrada em **Configurações → WhatsApp**.
 
 Verifique o agendador:
 
