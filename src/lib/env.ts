@@ -37,6 +37,10 @@ const schema = z.object({
   /** Opcional: rate limit compartilhado entre instâncias (Upstash Redis REST). */
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+  /** Mídia do WhatsApp no Vercel Blob (store privado). Sem nenhum dos dois, grava em data/media. */
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  BLOB_STORE_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
