@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPhone } from "@/lib/phone";
 import type { Form } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
 import { PRIORITIES, PRIORITY_META } from "@/lib/leads";
@@ -108,6 +109,20 @@ export function FormDialog({ form }: { form?: Form }) {
             />
             <span className="text-xs text-muted-foreground">
               Não conta como 1ª resposta: o SLA continua esperando o contato humano.
+            </span>
+          </Field>
+          <Field label="WhatsApp da empresa (opcional)" htmlFor="ff-wa">
+            <Input
+              id="ff-wa"
+              name="whatsappNumber"
+              type="tel"
+              inputMode="tel"
+              defaultValue={form?.whatsappNumber ? formatPhone(form.whatsappNumber) : ""}
+              placeholder="(11) 98765-4321"
+            />
+            <span className="text-xs text-muted-foreground">
+              Depois de enviar, o lead vê o botão &quot;Falar agora no WhatsApp&quot; — conversa começa na hora, enquanto
+              o interesse está quente.
             </span>
           </Field>
           <div className="flex flex-wrap gap-5 text-sm">

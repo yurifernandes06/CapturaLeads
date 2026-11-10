@@ -5,12 +5,11 @@ import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db, schema } from "@/db";
+import { pickAttribution, safeUrl } from "@/lib/attribution";
 import { cn } from "@/lib/utils";
 import { PublicLeadForm } from "./public-form";
 
 export const metadata: Metadata = { title: "Fale com a gente", robots: { index: false } };
-
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign"] as const;
 
 async function FormLoader({ params, searchParams }: Pick<PageProps<"/f/[slug]">, "params" | "searchParams">) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
@@ -21,9 +20,12 @@ async function FormLoader({ params, searchParams }: Pick<PageProps<"/f/[slug]">,
     .get();
   if (!form) notFound();
 
-  const utm = Object.fromEntries(
-    UTM_KEYS.map((k) => [k, typeof sp[k] === "string" ? (sp[k] as string).slice(0, 100) : ""]),
-  ) as Record<(typeof UTM_KEYS)[number], string>;
+  // UTMs + clique do anúncio; no embed, o snippet repassa a página (lp) e o referrer (ref) do site-pai.
+  const attribution: Record<string, string> = { ...pickAttribution(sp) };
+  const lp = safeUrl(sp.lp);
+  const ref = safeUrl(sp.ref);
+  if (lp) attribution.landing_page = lp;
+  if (ref) attribution.referrer = ref;
 
   return (
     <PublicLeadForm
@@ -35,8 +37,9 @@ async function FormLoader({ params, searchParams }: Pick<PageProps<"/f/[slug]">,
         successMessage: form.successMessage,
         askEmail: form.askEmail,
         askCompany: form.askCompany,
+        whatsappNumber: form.whatsappNumber,
       }}
-      utm={utm}
+      attribution={attribution}
     />
   );
 }

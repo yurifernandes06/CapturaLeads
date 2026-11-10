@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, BuildingIcon, MailIcon, MegaphoneIcon, TagIcon, WalletIcon } from "lucide-react";
+import { ArrowLeftIcon, BuildingIcon, GlobeIcon, MailIcon, MegaphoneIcon, MousePointerClickIcon, TagIcon, WalletIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,6 +9,7 @@ import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Timeline } from "@/components/leads/timeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { adNetworkOf, hostOf } from "@/lib/attribution";
 import { formatCurrency, formatDateTime, formatDuration, formatRelative, initials } from "@/lib/format";
 import { SOURCE_LABEL, STAGE_META } from "@/lib/leads";
 import { formatPhone, whatsappLink } from "@/lib/phone";
@@ -253,6 +254,34 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
               {lead.utmSource || lead.utmCampaign ? (
                 <Detail icon={<MegaphoneIcon />} label="Campanha">
                   {[lead.utmSource, lead.utmMedium, lead.utmCampaign].filter(Boolean).join(" / ")}
+                  {lead.utmContent || lead.utmTerm ? (
+                    <span className="block text-xs text-muted-foreground">
+                      {[lead.utmContent && `anúncio: ${lead.utmContent}`, lead.utmTerm && `termo: ${lead.utmTerm}`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  ) : null}
+                </Detail>
+              ) : null}
+              {lead.clickId ? (
+                <Detail icon={<MousePointerClickIcon />} label="Clique de anúncio">
+                  {adNetworkOf(lead.clickId) ?? "Anúncio"}
+                </Detail>
+              ) : null}
+              {lead.referrer || lead.landingPage ? (
+                <Detail icon={<GlobeIcon />} label="Origem web">
+                  {lead.referrer ? <span className="block">Veio de {hostOf(lead.referrer) ?? lead.referrer}</span> : null}
+                  {lead.landingPage ? (
+                    <a
+                      href={lead.landingPage}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-xs text-muted-foreground hover:text-primary"
+                      title={lead.landingPage}
+                    >
+                      {lead.landingPage.replace(/^https?:\/\//, "")}
+                    </a>
+                  ) : null}
                 </Detail>
               ) : null}
             </CardContent>
@@ -282,7 +311,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
 
 function Detail({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex min-w-0 gap-3">
       <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="eyebrow">{label}</div>

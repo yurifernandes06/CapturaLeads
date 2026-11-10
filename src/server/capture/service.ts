@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { PRIORITIES, SOURCES, SOURCE_LABEL, parseTags } from "@/lib/leads";
+import { clickIdOf, safeUrl } from "@/lib/attribution";
 import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { renderTemplate } from "@/lib/templates";
 import { createLead, recordActivity } from "@/server/leads/service";
@@ -38,6 +39,19 @@ export const captureSchema = z
     utm_source: optionalText(100),
     utm_medium: optionalText(100),
     utm_campaign: optionalText(100),
+    utm_term: optionalText(100),
+    utm_content: optionalText(100),
+    gclid: optionalText(200),
+    fbclid: optionalText(200),
+    /** Página de origem e página do formulário (só http/https são guardadas). */
+    referrer: z
+      .string()
+      .optional()
+      .transform((v) => safeUrl(v) ?? undefined),
+    landing_page: z
+      .string()
+      .optional()
+      .transform((v) => safeUrl(v) ?? undefined),
   })
   .transform((d) => ({
     ...d,
@@ -66,6 +80,11 @@ export async function captureLead(
       utmSource: input.utm_source,
       utmMedium: input.utm_medium,
       utmCampaign: input.utm_campaign,
+      utmTerm: input.utm_term,
+      utmContent: input.utm_content,
+      clickId: clickIdOf(input),
+      referrer: input.referrer,
+      landingPage: input.landing_page,
       formId: form?.id,
     },
     { autoAssign: true, inbound: true },

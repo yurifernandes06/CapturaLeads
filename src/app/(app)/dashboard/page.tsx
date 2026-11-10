@@ -280,6 +280,26 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
         </Card>
       </div>
 
+      {data.campaigns.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Campanhas que mais trazem leads</CardTitle>
+            <CardDescription>Pelo utm_campaign dos links de anúncio no período. Clique para ver os leads.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BarList
+              className="sm:grid-cols-2 sm:gap-x-8"
+              items={data.campaigns.map((c) => ({
+                label: c.campaign,
+                value: c.count,
+                hint: kpis.newLeads ? `${Math.round((c.count / kpis.newLeads) * 100)}%` : undefined,
+                href: `/leads?q=${encodeURIComponent(c.campaign)}${ownerParam}`,
+              }))}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
       {scope === "team" ? (
         <Card className="gap-0 pb-0">
           <CardHeader className="pb-4">

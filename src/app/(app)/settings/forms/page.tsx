@@ -5,6 +5,7 @@ import { CopyField } from "@/components/app/copy-field";
 import { PriorityBadge } from "@/components/leads/badges";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db, schema } from "@/db";
+import { embedSnippet } from "@/lib/attribution";
 import { env } from "@/lib/env";
 import { requireAdmin } from "@/server/auth/dal";
 import { FormActiveSwitch, FormDialog } from "./form-dialog";
@@ -26,7 +27,8 @@ export default async function FormsPage() {
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Páginas de captura prontas para anúncios, bio do Instagram e QR code. UTMs são gravadas automaticamente.
+          Páginas de captura prontas para anúncios, bio do Instagram e QR code. UTMs, clique do anúncio (gclid/fbclid),
+          site de origem e página são gravados no lead.
         </p>
         <FormDialog />
       </div>
@@ -53,6 +55,7 @@ export default async function FormsPage() {
                   <CardDescription>
                     {f.submissions} {f.submissions === 1 ? "envio" : "envios"}
                     {f.welcomeMessage ? " · boas-vindas automática no WhatsApp" : ""}
+                    {f.whatsappNumber ? " · botão de WhatsApp no sucesso" : ""}
                     {f.tags.length ? ` · tags: ${f.tags.join(", ")}` : ""}
                   </CardDescription>
                   <div className="col-start-2 row-span-2 row-start-1 flex items-center gap-1 self-start justify-self-end">
@@ -63,9 +66,10 @@ export default async function FormsPage() {
                 <CardContent className="grid gap-3">
                   <CopyField label="Link" value={url} />
                   <CopyField
-                    label="Incorporar no site"
-                    value={`<iframe src="${url}?embed=1" style="width:100%;min-height:620px;border:0" loading="lazy"></iframe>`}
+                    label="Link para anúncio (troque a campanha)"
+                    value={`${url}?utm_source=instagram&utm_medium=cpc&utm_campaign=${f.slug}`}
                   />
+                  <CopyField label="Incorporar no site (repassa UTMs e página)" value={embedSnippet(url, f.slug)} multiline />
                   <a
                     href={`/f/${f.slug}`}
                     target="_blank"

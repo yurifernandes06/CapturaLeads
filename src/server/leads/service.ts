@@ -24,6 +24,11 @@ export type NewLeadInput = {
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
+  utmTerm?: string | null;
+  utmContent?: string | null;
+  clickId?: string | null;
+  referrer?: string | null;
+  landingPage?: string | null;
   formId?: string | null;
 };
 
@@ -93,6 +98,11 @@ export async function createLead(
       utmSource: input.utmSource ?? null,
       utmMedium: input.utmMedium ?? null,
       utmCampaign: input.utmCampaign ?? null,
+      utmTerm: input.utmTerm ?? null,
+      utmContent: input.utmContent ?? null,
+      clickId: input.clickId ?? null,
+      referrer: input.referrer ?? null,
+      landingPage: input.landingPage ?? null,
       formId: input.formId ?? null,
       lastInboundAt: opts.inbound ? now : null,
       createdAt: now,

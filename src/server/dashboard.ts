@@ -2,6 +2,7 @@ import "server-only";
 import { TZDate } from "@date-fns/tz";
 import { and, asc, eq, gte, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { topCampaigns } from "@/lib/attribution";
 import { OPEN_STAGES, SOURCES, STAGES, type Source, type Stage } from "@/lib/leads";
 import type { SlaConfig } from "@/lib/sla/config";
 import { firstResponseMetric } from "@/lib/sla/engine";
@@ -125,6 +126,7 @@ export async function getDashboard(opts: { range: RangeKey; ownerId?: string; co
     bySource,
     funnel,
     lostReasons,
+    campaigns: topCampaigns(periodLeads),
     ranking,
   };
 }

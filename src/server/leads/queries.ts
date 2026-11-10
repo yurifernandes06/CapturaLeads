@@ -22,7 +22,7 @@ export function buildLeadWhere(filters: LeadFilters, currentUserId: string, tz =
   if (filters.q) {
     const term = `%${filters.q.replace(/[%_]/g, "")}%`;
     const digits = filters.q.replace(/\D/g, "");
-    const ors = [like(l.name, term), like(l.email, term), like(l.company, term)];
+    const ors = [like(l.name, term), like(l.email, term), like(l.company, term), like(l.utmCampaign, term)];
     if (digits.length >= 4) ors.push(like(l.phone, `%${digits}%`));
     conds.push(or(...ors)!);
   }
