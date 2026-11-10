@@ -85,19 +85,19 @@ export function Board({ leads }: { leads: BoardLead[] }) {
               if (id) move(id, stage);
             }}
             className={cn(
-              "flex w-72 shrink-0 snap-start flex-col rounded-xl border bg-muted/40 transition-colors",
-              over === stage && dragging && "border-primary/50 bg-primary/5",
+              "flex w-72 shrink-0 snap-start flex-col rounded-xl border bg-black/50 transition-colors",
+              over === stage && dragging && "border-primary/60 bg-primary/[0.06] shadow-[0_0_40px_-20px_var(--primary)]",
             )}
           >
-            <header className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
+            <header className="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-3">
               <div className="flex items-center gap-2">
                 <span className={cn("size-2 rounded-full", STAGE_META[stage].dot)} />
-                <h2 className="text-sm font-semibold">{STAGE_META[stage].label}</h2>
-                <span className="rounded-full bg-background px-1.5 text-xs text-muted-foreground tabular">{items.length}</span>
+                <h2 className="font-heading text-sm font-semibold">{STAGE_META[stage].label}</h2>
+                <span className="rounded-md bg-white/[0.06] px-1.5 font-mono text-[0.7rem] text-muted-foreground tabular">{items.length}</span>
               </div>
               {total ? <span className="text-xs text-muted-foreground tabular">{formatCurrency(total)}</span> : null}
             </header>
-            <div className="flex min-h-32 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+            <div className="flex min-h-32 flex-1 flex-col gap-2 overflow-y-auto p-2">
               {items.map((lead) => (
                 <article
                   key={lead.id}
@@ -109,7 +109,7 @@ export function Board({ leads }: { leads: BoardLead[] }) {
                   }}
                   onDragEnd={() => setDragging(null)}
                   className={cn(
-                    "group cursor-grab rounded-lg border bg-card p-3 shadow-xs transition-shadow hover:shadow-md active:cursor-grabbing",
+                    "group cursor-grab rounded-lg border bg-card p-3 shadow-[inset_0_1px_0_oklch(1_0_0/4%)] transition-all hover:border-white/15 hover:bg-[color-mix(in_oklch,var(--card),white_3%)] active:cursor-grabbing",
                     dragging === lead.id && "opacity-50",
                   )}
                 >

@@ -18,13 +18,13 @@ import { MessageMedia, mediaFromMeta } from "./message-media";
 type Item = { activity: Activity; userName: string | null };
 
 const ICONS: Record<ActivityType, { icon: LucideIcon | typeof WhatsAppIcon; className: string }> = {
-  created: { icon: SparklesIcon, className: "bg-primary/12 text-primary" },
-  note: { icon: StickyNoteIcon, className: "bg-warning/15 text-warning" },
-  call: { icon: PhoneIcon, className: "bg-info/12 text-info" },
+  created: { icon: SparklesIcon, className: "bg-primary text-primary-foreground" },
+  note: { icon: StickyNoteIcon, className: "bg-white/[0.06] text-foreground/80 ring-1 ring-white/[0.06]" },
+  call: { icon: PhoneIcon, className: "bg-white/[0.06] text-foreground/80 ring-1 ring-white/[0.06]" },
   whatsapp_in: { icon: WhatsAppIcon, className: "bg-whatsapp/15 text-whatsapp" },
-  whatsapp_out: { icon: WhatsAppIcon, className: "bg-whatsapp/15 text-whatsapp" },
-  stage_change: { icon: ArrowRightLeftIcon, className: "bg-chart-4/12 text-chart-4" },
-  assignment: { icon: UserRoundCheckIcon, className: "bg-secondary text-secondary-foreground" },
+  whatsapp_out: { icon: WhatsAppIcon, className: "bg-primary/15 text-primary ring-1 ring-primary/25" },
+  stage_change: { icon: ArrowRightLeftIcon, className: "bg-primary/15 text-primary ring-1 ring-primary/25" },
+  assignment: { icon: UserRoundCheckIcon, className: "bg-white/[0.06] text-foreground/80 ring-1 ring-white/[0.06]" },
   sla_breach: { icon: AlarmClockIcon, className: "bg-danger/12 text-danger" },
   system: { icon: InfoIcon, className: "bg-muted text-muted-foreground" },
 };

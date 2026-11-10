@@ -42,6 +42,7 @@ export default async function PipelinePage(props: PageProps<"/pipeline">) {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
+        eyebrow="Funil de vendas"
         title="Pipeline"
         description="Arraste os cards entre as etapas. Fechados dos últimos 30 dias ficam visíveis."
         actions={

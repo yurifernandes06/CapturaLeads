@@ -5,13 +5,14 @@
 export const STAGES = ["new", "contacted", "qualified", "proposal", "won", "lost"] as const;
 export type Stage = (typeof STAGES)[number];
 
+/** Etapas vão do branco ao vermelho conforme o lead esquenta; ganho/perdido mantêm a semântica. */
 export const STAGE_META: Record<Stage, { label: string; dot: string; badge: string }> = {
-  new: { label: "Novo", dot: "bg-info", badge: "bg-info/12 text-info" },
-  contacted: { label: "Em contato", dot: "bg-chart-4", badge: "bg-chart-4/12 text-chart-4" },
-  qualified: { label: "Qualificado", dot: "bg-warning", badge: "bg-warning/15 text-warning" },
-  proposal: { label: "Proposta", dot: "bg-primary", badge: "bg-primary/12 text-primary" },
-  won: { label: "Ganho", dot: "bg-success", badge: "bg-success/15 text-success" },
-  lost: { label: "Perdido", dot: "bg-muted-foreground", badge: "bg-muted text-muted-foreground" },
+  new: { label: "Novo", dot: "bg-foreground", badge: "bg-white/[0.09] text-foreground ring-1 ring-white/10" },
+  contacted: { label: "Em contato", dot: "bg-foreground/55", badge: "bg-white/[0.05] text-foreground/80 ring-1 ring-white/[0.07]" },
+  qualified: { label: "Qualificado", dot: "bg-primary/60", badge: "bg-primary/10 text-[color-mix(in_oklch,var(--primary),white_40%)] ring-1 ring-primary/20" },
+  proposal: { label: "Proposta", dot: "bg-primary", badge: "bg-primary/20 text-[color-mix(in_oklch,var(--primary),white_30%)] ring-1 ring-primary/40" },
+  won: { label: "Ganho", dot: "bg-success", badge: "bg-success/12 text-success ring-1 ring-success/25" },
+  lost: { label: "Perdido", dot: "bg-muted-foreground/60", badge: "bg-muted text-muted-foreground ring-1 ring-white/[0.05]" },
 };
 
 export const OPEN_STAGES: Stage[] = ["new", "contacted", "qualified", "proposal"];
@@ -21,7 +22,7 @@ export const PRIORITIES = ["high", "medium", "low"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
 export const PRIORITY_META: Record<Priority, { label: string; className: string }> = {
-  high: { label: "Quente", className: "text-danger" },
+  high: { label: "Quente", className: "text-primary" },
   medium: { label: "Morno", className: "text-warning" },
   low: { label: "Frio", className: "text-info" },
 };

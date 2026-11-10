@@ -1,4 +1,4 @@
-# CapturaLeads
+# João Vitor Bussines (CapturaLeads)
 
 CRM enxuto de captura e gestão de leads para times de vendas que vivem no WhatsApp.
 
@@ -34,7 +34,8 @@ com horário comercial avisa quando alguém está esperando demais, e o vendedor
 | | |
 | --- | --- |
 | ![Lead](docs/screenshots/lead.png) | ![Pipeline](docs/screenshots/pipeline.png) |
-| ![SLA](docs/screenshots/sla.png) | ![Dark](docs/screenshots/dashboard-dark.png) |
+| ![SLA](docs/screenshots/sla.png) | ![Login](docs/screenshots/login.png) |
+| ![Inbox](docs/screenshots/inbox.png) | |
 
 ## Stack
 

@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Gráficos leves em HTML/CSS (sem biblioteca). Série única na cor primária:
+ * Gráficos leves em HTML/CSS (sem biblioteca). Série única no vermelho da marca:
  * o título nomeia a série, então não há legenda. Valores ficam em tokens de
- * texto, nunca na cor da marca. Cada barra tem tooltip no hover/foco.
+ * texto. No BarList só o 1º item (o maior) fica vermelho. Tooltip no hover/foco.
  */
 
 export function ColumnChart({
@@ -35,7 +35,7 @@ export function ColumnChart({
           {data.map((d) => (
             <li key={d.key} className="group relative flex h-full flex-1 items-end" tabIndex={0}>
               <div
-                className="w-full rounded-t-[4px] bg-primary/85 transition-colors group-hover:bg-primary group-focus-visible:bg-primary"
+                className="w-full rounded-t-[3px] bg-gradient-to-t from-primary/35 to-primary/90 transition-colors group-hover:from-primary/60 group-hover:to-primary group-focus-visible:to-primary"
                 style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value ? 3 : 0 }}
               />
               <span
@@ -73,7 +73,7 @@ export function BarList({
   if (!items.length) return <p className="py-6 text-center text-sm text-muted-foreground">Sem dados no período.</p>;
   return (
     <ul className={cn("grid gap-2.5", className)}>
-      {items.map((item) => {
+      {items.map((item, index) => {
         const content = (
           <>
             <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
@@ -83,8 +83,11 @@ export function BarList({
                 {item.hint ? <span className="ml-1.5 text-xs font-normal text-muted-foreground">{item.hint}</span> : null}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary/85" style={{ width: `${(item.value / max) * 100}%` }} />
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className={cn("h-full rounded-full", index === 0 ? "bg-primary" : "bg-foreground/45")}
+                style={{ width: `${(item.value / max) * 100}%` }}
+              />
             </div>
           </>
         );

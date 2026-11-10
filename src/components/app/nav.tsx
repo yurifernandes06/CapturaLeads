@@ -39,7 +39,7 @@ export function NavLinksFallback() {
 
 function NavList({ pathname, onNavigate, badges }: { pathname: string; onNavigate?: () => void; badges?: NavBadges }) {
   return (
-    <nav className="grid gap-0.5">
+    <nav className="grid gap-1">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         const badge = badges?.[href];
@@ -50,20 +50,21 @@ function NavList({ pathname, onNavigate, badges }: { pathname: string; onNavigat
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              active && "bg-sidebar-accent text-sidebar-accent-foreground",
+              "group relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              active &&
+                "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-full before:bg-sidebar-primary before:shadow-[0_0_12px_var(--sidebar-primary)]",
             )}
           >
             <Icon
               className={cn(
-                "size-4 text-sidebar-foreground/60 transition-colors group-hover:text-sidebar-accent-foreground",
+                "size-[1.05rem] text-sidebar-foreground/45 transition-colors group-hover:text-sidebar-accent-foreground",
                 active && "text-sidebar-primary",
               )}
             />
             {label}
             {badge ? (
               <span
-                className="ml-auto min-w-5 rounded-full bg-primary px-1.5 text-center text-xs leading-5 font-semibold text-primary-foreground tabular"
+                className="ml-auto min-w-5 rounded-md bg-primary px-1.5 text-center font-mono text-[0.7rem] leading-5 font-semibold text-primary-foreground tabular"
                 aria-label={`${badge} pendentes`}
               >
                 {badge > 99 ? "99+" : badge}

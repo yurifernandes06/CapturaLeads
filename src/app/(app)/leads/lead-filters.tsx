@@ -96,8 +96,8 @@ export function LeadFiltersBar({ filters, owners, tags }: { filters: LeadFilters
             type="button"
             onClick={() => apply({ ...view.filters, q: filters.q, sort: filters.sort })}
             className={cn(
-              "h-7 rounded-full border px-3 text-xs font-medium transition-colors hover:bg-muted",
-              isView(view.filters) && "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15",
+              "h-7 rounded-md border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+              isView(view.filters) && "border-primary/50 bg-primary/15 text-foreground hover:bg-primary/20",
             )}
           >
             {view.label}

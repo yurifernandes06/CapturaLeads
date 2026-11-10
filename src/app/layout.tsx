@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono, Sora } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,12 +15,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/** Títulos e números de destaque. */
+const display = Sora({
+  variable: "--font-display",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "CapturaLeads",
-    template: "%s · CapturaLeads",
+    default: BRAND.name,
+    template: `%s · ${BRAND.name}`,
   },
-  description: "Captura e gestão de leads com WhatsApp e motor de SLA.",
+  description: BRAND.tagline,
+  applicationName: BRAND.name,
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b0b0b",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,12 +40,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="pt-BR"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <body className="flex min-h-full flex-col">
+        {/* Sistema 100% blackout: tema escuro fixo. */}
+        <ThemeProvider attribute="class" forcedTheme="dark" defaultTheme="dark" disableTransitionOnChange>
           {children}
-          <Toaster richColors position="top-right" />
+          <Toaster theme="dark" richColors position="top-right" />
         </ThemeProvider>
       </body>
     </html>

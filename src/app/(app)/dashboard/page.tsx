@@ -61,6 +61,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   return (
     <div className="grid gap-6">
       <PageHeader
+        eyebrow="Visão geral"
         title={`Olá, ${user.name.split(" ")[0]}`}
         description={scope === "me" ? "Sua carteira de leads." : "Visão do time inteiro."}
         actions={
@@ -88,7 +89,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             <AlertPill
               href={`/leads?sla=breached&sort=sla${ownerParam}`}
               icon={AlarmClockIcon}
-              className="border-danger/30 bg-danger/8 text-danger"
+              className="border-primary/40 bg-primary/12 text-[color-mix(in_oklch,var(--primary),white_35%)] shadow-[0_0_24px_-12px_var(--primary)]"
             >
               {kpis.breachedNow} {kpis.breachedNow === 1 ? "lead com SLA estourado" : "leads com SLA estourado"}
             </AlertPill>
@@ -103,7 +104,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             </AlertPill>
           ) : null}
           {kpis.unassigned && scope === "team" ? (
-            <AlertPill href="/leads?owner=none&stage=open" icon={UserRoundXIcon} className="bg-muted text-muted-foreground">
+            <AlertPill href="/leads?owner=none&stage=open" icon={UserRoundXIcon} className="border-border bg-muted text-muted-foreground">
               {kpis.unassigned} sem responsável
             </AlertPill>
           ) : null}
@@ -112,6 +113,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores">
         <StatTile
+          highlight
           icon={UsersRoundIcon}
           label="Leads novos"
           value={String(kpis.newLeads)}
@@ -154,18 +156,18 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             <CardDescription>Leads abertos ordenados pela urgência do SLA.</CardDescription>
             <CardAction>
               <Link href={`/leads?stage=open&sort=sla${ownerParam}`} className="text-sm font-medium text-primary hover:underline">
-                Ver fila
+                Ver fila →
               </Link>
             </CardAction>
           </CardHeader>
           <CardContent>
             {queue.length ? (
-              <ul className="-mx-2 grid">
+              <ul className="-mx-2 grid divide-y divide-border/60">
                 {queue.map(({ lead, ownerName }) => (
                   <li key={lead.id}>
                     <Link
                       href={`/leads/${lead.id}`}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/60"
+                      className="flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-white/[0.03]"
                     >
                       <PriorityBadge priority={lead.priority} showLabel={false} />
                       <div className="min-w-0 flex-1">
@@ -185,7 +187,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
                 ))}
               </ul>
             ) : (
-              <p className="py-10 text-center text-sm text-muted-foreground">Fila vazia. Bom trabalho! 🎉</p>
+              <p className="py-10 text-center text-sm text-muted-foreground">Fila vazia. Bom trabalho!</p>
             )}
           </CardContent>
         </Card>
@@ -215,7 +217,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
               </CardDescription>
               <CardAction>
                 <Link href="/tasks" className="text-sm font-medium text-primary hover:underline">
-                  Ver todas
+                  Ver todas →
                 </Link>
               </CardAction>
             </CardHeader>
@@ -224,7 +226,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
                 items={dueTasks.map(({ task, leadName }) =>
                   toTaskView(task, { now, timezone: config.timezone, user }, { lead: { id: task.leadId, name: leadName } }),
                 )}
-                empty="Tudo em dia. ✅"
+                empty="Tudo em dia."
               />
             </CardContent>
           </Card>
@@ -286,7 +288,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           </CardHeader>
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableRow className="bg-black/30 hover:bg-black/30">
                 <TableHead className="pl-4">Vendedor</TableHead>
                 <TableHead className="text-right">Leads</TableHead>
                 <TableHead className="text-right">1ª resposta</TableHead>
@@ -301,7 +303,14 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
                 data.ranking.map((r, i) => (
                   <TableRow key={r.id}>
                     <TableCell className="pl-4 font-medium">
-                      <span className="mr-2 inline-block w-4 text-muted-foreground tabular">{i + 1}</span>
+                      <span
+                        className={cn(
+                          "mr-2.5 inline-grid size-5 place-items-center rounded font-mono text-[0.7rem] text-muted-foreground tabular",
+                          i === 0 ? "bg-primary text-primary-foreground" : "bg-white/[0.05]",
+                        )}
+                      >
+                        {i + 1}
+                      </span>
                       {r.name}
                       {!r.active ? <span className="ml-2 text-xs text-muted-foreground">(inativo)</span> : null}
                     </TableCell>
@@ -330,7 +339,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 
 function Segmented({ items }: { items: { label: string; href: string; active: boolean }[] }) {
   return (
-    <div className="flex rounded-lg border bg-card p-0.5">
+    <div className="flex rounded-lg border bg-black/40 p-1">
       {items.map((item) => (
         <Link
           key={item.href}
@@ -338,7 +347,7 @@ function Segmented({ items }: { items: { label: string; href: string; active: bo
           aria-current={item.active ? "page" : undefined}
           className={cn(
             "rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground",
-            item.active && "bg-secondary text-foreground",
+            item.active && "bg-white/[0.08] text-foreground shadow-[inset_0_1px_0_oklch(1_0_0/8%)]",
           )}
         >
           {item.label}
@@ -354,28 +363,37 @@ function StatTile({
   value,
   foot,
   tone,
+  highlight,
 }: {
   icon: LucideIcon;
   label: string;
   value: string;
   foot: ReactNode;
   tone?: "good" | "warn" | "bad";
+  /** Indicador principal: recebe o destaque vermelho. */
+  highlight?: boolean;
 }) {
   return (
-    <Card className="gap-3">
-      <CardContent className="grid gap-3">
+    <Card className={cn("relative gap-3", highlight && "bg-gradient-to-br from-primary/18 via-card to-card ring-primary/25")}>
+      {highlight ? <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent" /> : null}
+      <CardContent className="grid gap-4">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-muted-foreground">{label}</span>
-          <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+          <span className="eyebrow">{label}</span>
+          <span
+            className={cn(
+              "grid size-8 place-items-center rounded-lg bg-white/[0.04] text-muted-foreground ring-1 ring-white/[0.06]",
+              highlight && "bg-primary text-primary-foreground ring-0",
+            )}
+          >
             <Icon className="size-4" />
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-3xl font-semibold tracking-tight tabular">{value}</span>
+        <div className="flex items-center gap-2.5">
+          <span className="font-heading text-[2.4rem] leading-none font-semibold tracking-tight tabular">{value}</span>
           {tone ? (
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-medium",
+                "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium before:size-1.5 before:rounded-full before:bg-current",
                 tone === "good" && "bg-success/12 text-success",
                 tone === "warn" && "bg-warning/15 text-warning",
                 tone === "bad" && "bg-danger/12 text-danger",
@@ -405,7 +423,7 @@ function AlertPill({
   return (
     <Link
       href={href}
-      className={cn("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-opacity hover:opacity-80", className)}
+      className={cn("inline-flex h-9 items-center gap-2 rounded-lg border px-3.5 text-sm font-medium transition-opacity hover:opacity-80", className)}
     >
       <Icon className="size-4" />
       {children}

@@ -12,14 +12,14 @@ export function CopyField({ label, value, multiline }: { label: string; value: s
     setTimeout(() => setCopied(false), 1500);
   };
   return (
-    <div className="grid gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    <div className="grid min-w-0 gap-1.5">
+      <span className="eyebrow">{label}</span>
       <div className="flex items-start gap-2">
         <code
           className={
             multiline
-              ? "min-w-0 flex-1 overflow-x-auto rounded-lg border bg-muted/50 px-3 py-2 font-mono text-xs whitespace-pre"
-              : "min-w-0 flex-1 truncate rounded-lg border bg-muted/50 px-3 py-2 font-mono text-xs"
+              ? "min-w-0 flex-1 overflow-x-auto rounded-lg border bg-black/40 px-3 py-2 font-mono text-xs whitespace-pre"
+              : "min-w-0 flex-1 truncate rounded-lg border bg-black/40 px-3 py-2 font-mono text-xs"
           }
         >
           {value}

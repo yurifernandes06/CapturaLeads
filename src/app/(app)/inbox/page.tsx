@@ -48,11 +48,12 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
   return (
     <div className="grid gap-6">
       <LiveRefresh />
-      <PageHeader title="Inbox" description="Conversas de WhatsApp com os leads, da mais recente para a mais antiga." />
+      <PageHeader
+        eyebrow="Atendimento" title="Inbox" description="Conversas de WhatsApp com os leads, da mais recente para a mais antiga." />
 
-      <div className="grid h-[calc(100svh-13rem)] min-h-[28rem] overflow-hidden rounded-xl border bg-card lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <div className="grid h-[calc(100svh-13rem)] min-h-[28rem] overflow-hidden rounded-2xl border bg-card shadow-[0_30px_80px_-50px_black] lg:grid-cols-[22rem_minmax(0,1fr)]">
         {/* Lista de conversas (no celular some quando há conversa aberta) */}
-        <section aria-label="Conversas" className={cn("flex min-h-0 flex-col border-r", selected && "max-lg:hidden")}>
+        <section aria-label="Conversas" className={cn("flex min-h-0 flex-col border-r bg-black/30", selected && "max-lg:hidden")}>
           <nav className="flex gap-1 border-b p-2" aria-label="Filtro">
             {INBOX_FILTERS.map((f) => (
               <Link
@@ -61,7 +62,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
                 aria-current={f === filter ? "page" : undefined}
                 className={cn(
                   "rounded-md px-2.5 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-                  f === filter && "bg-secondary text-foreground",
+                  f === filter && "bg-white/[0.08] text-foreground",
                 )}
               >
                 {INBOX_FILTER_LABEL[f]}
@@ -78,11 +79,12 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
                       href={href({ c: lead.id })}
                       aria-current={lead.id === selectedId ? "true" : undefined}
                       className={cn(
-                        "flex gap-3 border-b px-3 py-3 transition-colors hover:bg-muted/50",
-                        lead.id === selectedId && "bg-muted",
+                        "relative flex gap-3 border-b border-border/60 px-3 py-3 transition-colors hover:bg-white/[0.03]",
+                        lead.id === selectedId &&
+                          "bg-white/[0.05] before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-primary",
                       )}
                     >
-                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-whatsapp/12 text-xs font-semibold text-whatsapp">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xs font-semibold text-foreground ring-1 ring-white/10">
                         {initials(lead.name)}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -98,7 +100,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
                             {lastMessage ?? "—"}
                           </p>
                           {awaiting ? (
-                            <span className="size-2 shrink-0 rounded-full bg-whatsapp" aria-label="Aguardando resposta" />
+                            <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" aria-label="Aguardando resposta" />
                           ) : null}
                         </div>
                         <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
@@ -112,7 +114,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
             </ul>
           ) : (
             <p className="p-6 text-center text-sm text-muted-foreground">
-              {filter === "awaiting" ? "Ninguém esperando resposta. 🎉" : "Nenhuma conversa ainda."}
+              {filter === "awaiting" ? "Ninguém esperando resposta." : "Nenhuma conversa ainda."}
             </p>
           )}
         </section>
@@ -143,7 +145,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
               </header>
 
               {/* column-reverse: começa rolado no fim, sem JS */}
-              <div className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto bg-muted/30 px-3 py-4">
+              <div className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto bg-black/40 grid-lines px-3 py-4">
                 <ol className="grid gap-2">
                   {messages.length ? (
                     messages.map((m) => {
@@ -156,12 +158,14 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
                           <div
                             className={cn(
                               "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-xs",
-                              out ? "rounded-tr-sm bg-whatsapp/15" : "rounded-tl-sm bg-card",
+                              out
+                                ? "rounded-tr-sm bg-primary/85 text-primary-foreground [&_.msg-meta]:text-white/70"
+                                : "rounded-tl-sm bg-card ring-1 ring-white/[0.06]",
                             )}
                           >
                             {media ? <MessageMedia media={media} className={text ? "mb-1.5" : undefined} /> : null}
                             {text ? <p className="break-words whitespace-pre-wrap">{text}</p> : null}
-                            <p className="mt-1 text-right text-[11px] text-muted-foreground">
+                            <p className="msg-meta mt-1 text-right text-[11px] text-muted-foreground">
                               {out && m.userName ? `${m.userName.split(" ")[0]} · ` : ""}
                               <time dateTime={m.createdAt.toISOString()} title={formatDateTime(m.createdAt)}>
                                 {formatRelative(m.createdAt, now)}
@@ -190,7 +194,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
           ) : (
             <div className="grid flex-1 place-items-center p-6 text-center">
               <div className="grid justify-items-center gap-2 text-muted-foreground">
-                <span className="grid size-12 place-items-center rounded-full bg-whatsapp/12 text-whatsapp">
+                <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/25">
                   <WhatsAppIcon className="size-6" />
                 </span>
                 <p className="text-sm">Escolha uma conversa para ver as mensagens.</p>

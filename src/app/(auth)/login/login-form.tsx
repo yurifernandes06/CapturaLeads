@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2Icon } from "lucide-react";
+import { ArrowRightIcon, Loader2Icon } from "lucide-react";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export function LoginForm({ next }: { next?: string }) {
           defaultValue={state.email}
           required
           autoFocus
-          className="h-10"
+          className="h-11 bg-black/40"
         />
       </div>
       <div className="grid gap-2">
@@ -35,17 +35,18 @@ export function LoginForm({ next }: { next?: string }) {
           type="password"
           autoComplete="current-password"
           required
-          className="h-10"
+          className="h-11 bg-black/40"
         />
       </div>
       {state.error ? (
-        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
         </p>
       ) : null}
-      <Button type="submit" size="lg" className="h-10" disabled={pending}>
+      <Button type="submit" size="lg" className="mt-2 h-11 text-[0.95rem]" disabled={pending}>
         {pending ? <Loader2Icon className="animate-spin" /> : null}
         Entrar
+        {pending ? null : <ArrowRightIcon className="transition-transform group-hover/button:translate-x-0.5" />}
       </Button>
     </form>
   );

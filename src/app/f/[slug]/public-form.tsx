@@ -34,17 +34,20 @@ export function PublicLeadForm({ form, utm }: { form: FormView; utm: Record<stri
 
   if (state.ok) {
     return (
-      <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
-        <CheckCircle2Icon className="mx-auto size-12 text-success" />
-        <h1 className="mt-4 text-xl font-semibold tracking-tight">Tudo certo!</h1>
+      <div className="rounded-2xl border bg-card p-8 text-center shadow-[0_30px_80px_-40px_black]">
+        <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_36px_-12px_var(--primary)]">
+          <CheckCircle2Icon className="size-8" />
+        </span>
+        <h1 className="mt-5 font-heading text-2xl font-semibold tracking-tight">Tudo certo!</h1>
         <p className="mt-2 text-muted-foreground">{form.successMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-balance">{form.title}</h1>
+    <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-[0_30px_80px_-40px_black] sm:p-8">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+      <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance sm:text-[1.7rem]">{form.title}</h1>
       {form.description ? <p className="mt-2 text-muted-foreground text-pretty">{form.description}</p> : null}
 
       <form action={action} className="mt-6 grid gap-4">
@@ -105,7 +108,7 @@ export function PublicLeadForm({ form, utm }: { form: FormView; utm: Record<stri
           </p>
         ) : null}
 
-        <Button type="submit" size="lg" className="h-11 text-base" disabled={pending}>
+        <Button type="submit" size="lg" className="mt-1 h-12 text-base" disabled={pending}>
           {pending ? <Loader2Icon className="animate-spin" /> : null}
           {form.buttonText}
         </Button>

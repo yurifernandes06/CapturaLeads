@@ -9,8 +9,8 @@ import { SlaIndicator } from "@/components/leads/sla-indicator";
 import { Timeline } from "@/components/leads/timeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency, formatDateTime, formatDuration, formatRelative } from "@/lib/format";
-import { SOURCE_LABEL } from "@/lib/leads";
+import { formatCurrency, formatDateTime, formatDuration, formatRelative, initials } from "@/lib/format";
+import { SOURCE_LABEL, STAGE_META } from "@/lib/leads";
 import { formatPhone, whatsappLink } from "@/lib/phone";
 import { evaluateSla } from "@/lib/sla/engine";
 import { suggestedDueAt, toLocalDateTime } from "@/lib/tasks";
@@ -58,10 +58,19 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
         >
           <ArrowLeftIcon className="size-4" /> Leads
         </Link>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border bg-card p-5 sm:p-6">
+          <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 size-72 rounded-full bg-primary/15 blur-3xl" />
+          <div className="relative flex min-w-0 items-center gap-4">
+            <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary font-heading text-lg font-semibold text-primary-foreground shadow-[0_10px_30px_-12px_var(--primary)]">
+              {initials(lead.name)}
+            </span>
           <div className="min-w-0">
+            <p className="mb-1 flex items-center gap-2 eyebrow">
+              <span className={cn("size-1.5 rounded-full", STAGE_META[lead.stage].dot)} />
+              {STAGE_META[lead.stage].label}
+            </p>
             <div className="flex items-center gap-2">
-              <h1 className="truncate text-2xl font-semibold tracking-tight">{lead.name}</h1>
+              <h1 className="truncate font-heading text-2xl font-semibold tracking-tight">{lead.name}</h1>
               <EditLeadButton
                 leadId={lead.id}
                 defaults={{
@@ -82,7 +91,8 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
               <span>Entrou {formatRelative(lead.createdAt, now)} via {SOURCE_LABEL[lead.source]}</span>
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          </div>
+          <div className="relative flex flex-wrap items-center gap-2">
             {lead.phone ? (
               <Button
                 variant="outline"
@@ -151,7 +161,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
                         {formatDuration(sla.elapsedMinutes)} de {formatDuration(sla.targetMinutes)}
                       </span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
@@ -230,7 +240,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
                       <Link
                         key={t}
                         href={`/leads?tag=${encodeURIComponent(t)}`}
-                        className="rounded-md bg-secondary px-1.5 py-0.5 text-xs hover:bg-accent"
+                        className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-xs ring-1 ring-white/[0.06] hover:bg-primary/15 hover:ring-primary/30"
                       >
                         {t}
                       </Link>
@@ -275,7 +285,7 @@ function Detail({ icon, label, children }: { icon: ReactNode; label: string; chi
     <div className="flex gap-3">
       <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</span>
       <div className="min-w-0 flex-1">
-        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className="eyebrow">{label}</div>
         <div className="break-words">{children}</div>
       </div>
     </div>
