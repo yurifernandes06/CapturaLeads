@@ -14,9 +14,9 @@ export function MobileNav({ badges }: { badges?: NavBadges }) {
       <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Abrir menu" />}>
         <MenuIcon />
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 bg-sidebar p-4 text-sidebar-foreground">
+      <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-4 pt-6 text-sidebar-foreground">
         <SheetTitle className="sr-only">Menu</SheetTitle>
-        <Logo className="mb-6 px-2 text-sidebar-accent-foreground" />
+        <Logo className="mb-8 px-2 text-sidebar-accent-foreground" />
         <NavLinks onNavigate={() => setOpen(false)} badges={badges} />
       </SheetContent>
     </Sheet>

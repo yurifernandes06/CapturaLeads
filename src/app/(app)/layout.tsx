@@ -56,26 +56,37 @@ async function MobileNavWithBadges() {
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-svh">
-      <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-3 text-sidebar-foreground lg:flex">
-        <Link href="/dashboard" className="mb-6 px-2 pt-1.5">
+      <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 pt-5 pb-4 text-sidebar-foreground lg:flex">
+        <Link href="/dashboard" className="mb-8 px-2">
           <Logo className="text-sidebar-accent-foreground" />
         </Link>
+        <p className="mb-2 px-3 eyebrow text-sidebar-foreground/40">Menu</p>
         <Suspense fallback={<NavLinksFallback />}>
           <SidebarNav />
         </Suspense>
+        <div className="mt-auto rounded-xl border border-sidebar-border bg-gradient-to-b from-primary/12 to-transparent p-3.5">
+          <p className="eyebrow text-primary">Atalho</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-sidebar-foreground/70">
+            Digite <kbd className="rounded border border-sidebar-border bg-sidebar-accent px-1 font-mono text-[0.65rem]">/</kbd>{" "}
+            no chat para usar respostas rápidas.
+          </p>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sm:px-6 lg:px-8">
           <Suspense fallback={<MobileNav />}>
             <MobileNavWithBadges />
           </Suspense>
+          <Link href="/dashboard" className="lg:hidden">
+            <Logo compact />
+          </Link>
           <div className="flex min-w-0 flex-1 items-center gap-2" />
           <Suspense fallback={<Skeleton className="h-8 w-40" />}>
             <CurrentUserMenu />
           </Suspense>
         </header>
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">{children}</main>
       </div>
     </div>
   );

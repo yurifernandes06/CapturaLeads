@@ -50,7 +50,7 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
     <form action={action} className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <fieldset disabled={readOnly || pending} className="grid gap-6">
         {readOnly ? (
-          <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          <p className="rounded-lg border bg-black/30 px-4 py-3 text-sm text-muted-foreground">
             Só administradores alteram o SLA. Estas são as regras em vigor.
           </p>
         ) : null}

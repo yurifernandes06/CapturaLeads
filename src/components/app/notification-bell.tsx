@@ -22,7 +22,7 @@ export type BellItem = {
 const ICON = {
   sla_breach: { icon: AlarmClockIcon, className: "bg-danger/12 text-danger" },
   sla_at_risk: { icon: AlarmClockIcon, className: "bg-warning/15 text-warning" },
-  new_lead: { icon: SparklesIcon, className: "bg-primary/12 text-primary" },
+  new_lead: { icon: SparklesIcon, className: "bg-primary text-primary-foreground" },
   new_message: { icon: MessageCircleIcon, className: "bg-whatsapp/15 text-whatsapp" },
   task_due: { icon: ListTodoIcon, className: "bg-warning/15 text-warning" },
 } satisfies Record<NotificationType, unknown>;
@@ -37,14 +37,14 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
       >
         <BellIcon />
         {unread ? (
-          <span className="absolute top-1 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white tabular">
+          <span className="absolute top-1 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-white shadow-[0_0_10px_var(--primary)] tabular">
             {unread > 99 ? "99+" : unread}
           </span>
         ) : null}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[22rem] gap-0 p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <p className="text-sm font-semibold">Notificações</p>
+          <p className="font-heading text-sm font-semibold">Notificações</p>
           {unread ? (
             <Button
               variant="ghost"
@@ -58,7 +58,7 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
         </div>
         <ul className="max-h-[60svh] overflow-y-auto">
           {items.length === 0 ? (
-            <li className="px-4 py-10 text-center text-sm text-muted-foreground">Tudo em dia por aqui. ✨</li>
+            <li className="px-4 py-10 text-center text-sm text-muted-foreground">Tudo em dia por aqui.</li>
           ) : (
             items.map((n) => {
               const { icon: Icon, className } = ICON[n.type];

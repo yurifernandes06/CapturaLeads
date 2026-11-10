@@ -47,13 +47,16 @@ async function Shell({ searchParams, children }: { searchParams: PageProps<"/f/[
   return (
     <main
       className={cn(
-        "flex min-h-svh items-center justify-center px-4 py-10",
-        !embedded && "bg-[radial-gradient(60rem_40rem_at_10%_-10%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent),radial-gradient(50rem_30rem_at_110%_110%,color-mix(in_oklch,var(--info)_14%,transparent),transparent)]",
+        "relative flex min-h-svh items-center justify-center overflow-hidden px-4 py-10",
+        !embedded && "glow-red",
         embedded && "bg-transparent py-4",
       )}
     >
-      <div className="w-full max-w-md">
-        {!embedded ? <Logo className="mb-6" /> : null}
+      {!embedded ? (
+        <div aria-hidden className="absolute inset-0 grid-lines [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+      ) : null}
+      <div className="relative w-full max-w-md">
+        {!embedded ? <Logo className="mb-8" /> : null}
         {children}
         {!embedded ? (
           <p className="mt-6 text-center text-xs text-muted-foreground">Seus dados são usados apenas para retornarmos o contato.</p>
@@ -79,7 +82,7 @@ function FormSkeleton() {
       <div className="grid w-full max-w-md gap-4">
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-80 rounded-2xl" />
+        <Skeleton className="h-96 rounded-2xl" />
       </div>
     </main>
   );

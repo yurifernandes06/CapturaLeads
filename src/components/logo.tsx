@@ -1,20 +1,23 @@
+import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
+/** Monograma JV em bloco vermelho + assinatura "João Vitor / Bussines". */
 export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
   return (
-    <span className={cn("inline-flex items-center gap-2 font-semibold tracking-tight", className)}>
-      <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-        <svg viewBox="0 0 24 24" fill="none" className="size-4.5" aria-hidden>
-          <path
-            d="M4 12a8 8 0 1 1 3.2 6.4L4 20l1.1-3.6A7.9 7.9 0 0 1 4 12Z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-          <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+    <span className={cn("inline-flex items-center gap-2.5", className)} aria-label={BRAND.name}>
+      <span
+        aria-hidden
+        className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-primary font-heading text-[0.95rem] font-bold tracking-tighter text-primary-foreground shadow-[0_0_0_1px_oklch(1_0_0/12%)_inset,0_8px_24px_-8px_var(--primary)]"
+      >
+        <span className="absolute inset-x-0 top-0 h-1/2 bg-white/10" />
+        <span className="relative">{BRAND.monogram}</span>
       </span>
-      {compact ? null : <span className="text-base">CapturaLeads</span>}
+      {compact ? null : (
+        <span className="grid leading-none" aria-hidden>
+          <span className="font-heading text-[0.95rem] font-semibold tracking-tight">{BRAND.short}</span>
+          <span className="mt-1 font-mono text-[0.6rem] tracking-[0.32em] text-primary uppercase">{BRAND.suffix}</span>
+        </span>
+      )}
     </span>
   );
 }

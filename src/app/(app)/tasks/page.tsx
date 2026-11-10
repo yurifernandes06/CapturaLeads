@@ -13,9 +13,9 @@ import { listMyTasks, toTaskView } from "@/server/tasks";
 export const metadata: Metadata = { title: "Minhas tarefas" };
 
 const BUCKET_META: Record<TaskBucket, { icon: LucideIcon; tone: string; empty: string }> = {
-  overdue: { icon: AlarmClockIcon, tone: "text-danger", empty: "Nada atrasado. 👏" },
+  overdue: { icon: AlarmClockIcon, tone: "text-primary", empty: "Nada atrasado." },
   today: { icon: CalendarClockIcon, tone: "text-warning", empty: "Nada para hoje." },
-  upcoming: { icon: CalendarDaysIcon, tone: "text-primary", empty: "Nenhuma tarefa agendada." },
+  upcoming: { icon: CalendarDaysIcon, tone: "text-muted-foreground", empty: "Nenhuma tarefa agendada." },
 };
 
 export default async function TasksPage() {
@@ -35,6 +35,7 @@ export default async function TasksPage() {
   return (
     <div className="grid gap-6">
       <PageHeader
+        eyebrow="Rotina"
         title="Minhas tarefas"
         description={
           open.length
@@ -48,12 +49,17 @@ export default async function TasksPage() {
           const { icon: Icon, tone, empty } = BUCKET_META[bucket];
           const items = groups[bucket] ?? [];
           return (
-            <Card key={bucket} className={cn(bucket === "overdue" && items.length && "ring-danger/40")}>
+            <Card
+              key={bucket}
+              className={cn(bucket === "overdue" && items.length && "bg-gradient-to-b from-primary/12 to-card ring-primary/35")}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Icon className={cn("size-4", tone)} />
                   {TASK_BUCKET_LABEL[bucket]}
-                  <span className="ml-auto text-sm font-normal text-muted-foreground tabular">{items.length}</span>
+                  <span className="ml-auto rounded-md bg-white/[0.06] px-1.5 font-mono text-xs font-normal text-muted-foreground tabular">
+                    {items.length}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>

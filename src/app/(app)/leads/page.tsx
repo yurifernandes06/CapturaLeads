@@ -36,6 +36,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
   return (
     <>
       <PageHeader
+        eyebrow="Carteira"
         title="Leads"
         description={`${total} ${total === 1 ? "lead encontrado" : "leads encontrados"}`}
         actions={
@@ -64,7 +65,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableRow className="bg-black/30 hover:bg-black/30">
                 <TableHead className="pl-4">Lead</TableHead>
                 <TableHead className="hidden md:table-cell">Contato</TableHead>
                 <TableHead className="hidden sm:table-cell">Etapa</TableHead>
