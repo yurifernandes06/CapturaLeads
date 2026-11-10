@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, gte, isNotNull, isNull, lt, lte } from "driz
 import { db, schema } from "@/db";
 import type { TaskView } from "@/components/tasks/task-list";
 import type { SlaConfig } from "@/lib/sla/config";
-import { endOfDay, formatDue, shouldRemind, taskBucket } from "@/lib/tasks";
+import { endOfDay, formatDue, isStaleReminder, shouldRemind, taskBucket } from "@/lib/tasks";
 import type { CurrentUser } from "@/server/auth/dal";
 import { sendTaskReminder } from "@/server/whatsapp/service";
 
@@ -135,6 +135,11 @@ export async function remindDueTasks(config: SlaConfig, now = Date.now()) {
   let reminded = 0;
   for (const row of due) {
     const { task } = row;
+    if (isStaleReminder(task.dueAt.getTime(), now)) {
+      // Backlog antigo: marca sem avisar, para não disparar uma enxurrada de lembretes.
+      await db.update(t).set({ remindedAt: new Date(now) }).where(eq(t.id, task.id));
+      continue;
+    }
     const ok = shouldRemind(
       { dueAt: task.dueAt.getTime(), doneAt: null, remindedAt: null },
       now,

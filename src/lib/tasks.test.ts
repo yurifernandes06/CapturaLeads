@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SLA_CONFIG } from "./sla/config";
-import { endOfDay, formatDue, parseLocalDateTime, shouldRemind, suggestedDueAt, taskBucket, toLocalDateTime } from "./tasks";
+import { endOfDay, formatDue, isStaleReminder, parseLocalDateTime, shouldRemind, suggestedDueAt, taskBucket, toLocalDateTime } from "./tasks";
 
 const TZ = "America/Sao_Paulo"; // UTC-3, sem horário de verão
 const at = (iso: string) => new Date(iso).getTime();
@@ -93,5 +93,15 @@ describe("shouldRemind", () => {
     const night = at("2026-11-14T23:00:00-03:00");
     const always = { ...cfg, businessHours: { ...cfg.businessHours, enabled: false } };
     expect(shouldRemind(open(night - 1), night, always)).toBe(true);
+  });
+});
+
+describe("isStaleReminder", () => {
+  const now = at("2026-11-10T10:00:00-03:00");
+  it("tarefa vencida há poucos dias ainda é lembrada", () => {
+    expect(isStaleReminder(now - 2 * 86_400_000, now)).toBe(false);
+  });
+  it("backlog antigo é marcado sem aviso", () => {
+    expect(isStaleReminder(now - 4 * 86_400_000, now)).toBe(true);
   });
 });
