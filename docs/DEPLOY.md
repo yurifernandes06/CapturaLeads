@@ -9,6 +9,18 @@ Dois caminhos testados. Escolha um:
 | SLA | `/api/cron/sla` chamado por agendador | tick interno (já vem ligado) |
 | Rate limit | Upstash Redis (opcional, recomendado) | memória (uma instância) |
 
+## Atalho: Vercel + Turso pelo Marketplace
+
+Com o projeto vinculado (`vercel link`) e a integração **Turso** conectada a ele, um script faz o resto
+(variáveis, segredos do cron no GitHub, tabelas e admin). Rode no seu terminal (Git Bash):
+
+```bash
+bash scripts/setup-vercel.sh voce@empresa.com "Seu Nome"   # pede a senha do admin sem mostrar
+npx vercel@latest deploy --prod
+```
+
+O app aceita tanto `DATABASE_URL`/`DATABASE_AUTH_TOKEN` quanto `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN`.
+
 ## 1. Banco (Turso)
 
 ```bash
