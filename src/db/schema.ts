@@ -74,6 +74,13 @@ export const leads = sqliteTable(
     utmSource: text("utm_source"),
     utmMedium: text("utm_medium"),
     utmCampaign: text("utm_campaign"),
+    utmTerm: text("utm_term"),
+    utmContent: text("utm_content"),
+    /** Clique de anúncio: `gclid:…` (Google) ou `fbclid:…` (Meta). */
+    clickId: text("click_id"),
+    /** Site de onde a pessoa veio e página em que preencheu o formulário. */
+    referrer: text("referrer"),
+    landingPage: text("landing_page"),
     formId: text("form_id"),
     /** Marcos de contato usados pelo motor de SLA. */
     firstResponseAt: timestamp("first_response_at"),
@@ -158,6 +165,8 @@ export const forms = sqliteTable("forms", {
   welcomeMessage: text("welcome_message"),
   askEmail: integer("ask_email", { mode: "boolean" }).notNull().default(true),
   askCompany: integer("ask_company", { mode: "boolean" }).notNull().default(false),
+  /** WhatsApp da empresa: a tela de sucesso oferece "chamar agora" (vazio = sem botão). */
+  whatsappNumber: text("whatsapp_number"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   submissions: integer("submissions").notNull().default(0),
   createdAt: createdAt(),

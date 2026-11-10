@@ -1,12 +1,14 @@
 "use client";
 
 import { CheckCircle2Icon, Loader2Icon } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { WhatsAppIcon } from "@/components/leads/badges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
+import { whatsappLink } from "@/lib/phone";
 import { submitPublicForm } from "./actions";
 
 type FormView = {
@@ -17,6 +19,8 @@ type FormView = {
   successMessage: string;
   askEmail: boolean;
   askCompany: boolean;
+  /** WhatsApp da empresa (E.164 sem +) para o botão "chamar agora" no sucesso. */
+  whatsappNumber: string | null;
 };
 
 /** Máscara leve de telefone BR enquanto digita: (11) 98765-4321 */
@@ -28,9 +32,23 @@ function maskPhone(v: string) {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-export function PublicLeadForm({ form, utm }: { form: FormView; utm: Record<string, string> }) {
+export function PublicLeadForm({ form, attribution }: { form: FormView; attribution: Record<string, string> }) {
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [page, setPage] = useState<{ referrer?: string; landing_page?: string }>({});
   const [state, action, pending] = useActionState<ActionResult, FormData>(submitPublicForm, { ok: false });
+
+  // Fora do embed, a própria página é a landing e o referrer vem do navegador.
+  useEffect(() => {
+    const next = {
+      landing_page: attribution.landing_page ? undefined : window.location.href,
+      referrer: attribution.referrer || !document.referrer ? undefined : document.referrer,
+    };
+    const id = setTimeout(() => setPage(next), 0);
+    return () => clearTimeout(id);
+  }, [attribution.landing_page, attribution.referrer]);
+
+  const hidden = { ...attribution, ...Object.fromEntries(Object.entries(page).filter(([, v]) => v)) };
 
   if (state.ok) {
     return (
@@ -40,6 +58,19 @@ export function PublicLeadForm({ form, utm }: { form: FormView; utm: Record<stri
         </span>
         <h1 className="mt-5 font-heading text-2xl font-semibold tracking-tight">Tudo certo!</h1>
         <p className="mt-2 text-muted-foreground">{form.successMessage}</p>
+        {form.whatsappNumber ? (
+          <a
+            href={whatsappLink(
+              form.whatsappNumber,
+              `Olá! Sou ${name.trim().split(" ")[0] || "eu"} e acabei de preencher o formulário "${form.title}".`,
+            )}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-whatsapp px-4 font-medium text-black transition-opacity hover:opacity-90"
+          >
+            <WhatsAppIcon className="size-5" /> Falar agora no WhatsApp
+          </a>
+        ) : null}
       </div>
     );
   }
@@ -52,7 +83,7 @@ export function PublicLeadForm({ form, utm }: { form: FormView; utm: Record<stri
 
       <form action={action} className="mt-6 grid gap-4">
         <input type="hidden" name="slug" value={form.slug} />
-        {Object.entries(utm).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
+        {Object.entries(hidden).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
         {/* Honeypot anti-spam: invisível para pessoas */}
         <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
           <label>
@@ -62,7 +93,16 @@ export function PublicLeadForm({ form, utm }: { form: FormView; utm: Record<stri
 
         <div className="grid gap-2">
           <Label htmlFor="pf-name">Nome</Label>
-          <Input id="pf-name" name="name" autoComplete="name" required minLength={2} className="h-11" />
+          <Input
+            id="pf-name"
+            name="name"
+            autoComplete="name"
+            required
+            minLength={2}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-11"
+          />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="pf-phone">WhatsApp</Label>

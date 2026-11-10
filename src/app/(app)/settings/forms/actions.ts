@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { errorMessage, type ActionResult } from "@/lib/action-result";
 import { PRIORITIES, parseTags } from "@/lib/leads";
+import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { assertUser } from "@/server/auth/dal";
 
 const PATH = "/settings/forms";
@@ -32,6 +33,12 @@ const formSchema = z.object({
   welcomeMessage: z.string().trim().max(1000).optional(),
   askEmail: z.string().optional(),
   askCompany: z.string().optional(),
+  whatsappNumber: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? normalizePhone(v) : ""))
+    .refine((v) => !v || isValidPhone(v), "WhatsApp da empresa inválido. Use DDD + número."),
 });
 
 export async function saveFormAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
@@ -60,6 +67,7 @@ export async function saveFormAction(_prev: ActionResult, formData: FormData): P
       welcomeMessage: d.welcomeMessage || null,
       askEmail: d.askEmail === "on",
       askCompany: d.askCompany === "on",
+      whatsappNumber: d.whatsappNumber || null,
     };
     if (d.id) await db.update(schema.forms).set(values).where(eq(schema.forms.id, d.id));
     else await db.insert(schema.forms).values(values);
