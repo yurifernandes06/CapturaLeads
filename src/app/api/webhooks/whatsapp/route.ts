@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { whatsapp, WebhookAuthError } from "@/server/whatsapp";
-import { handleInbound } from "@/server/whatsapp/service";
+import { attachInboundMedia, handleInbound, type PendingMedia } from "@/server/whatsapp/service";
 
 /**
  * Webhook único para o provedor ativo.
@@ -37,12 +37,24 @@ export async function POST(request: NextRequest) {
   }
 
   const results = [];
+  const pending: PendingMedia[] = [];
   for (const msg of messages) {
     try {
-      results.push(await handleInbound(msg));
+      const res = await handleInbound(msg, { deferMedia: true });
+      results.push(res);
+      if ("pendingMedia" in res && res.pendingMedia) pending.push(res.pendingMedia);
     } catch (err) {
       console.error("[whatsapp] falha ao processar mensagem", err);
     }
+  }
+
+  // Anexos baixam depois da resposta: o provedor recebe 200 rápido e não reenvia por timeout.
+  if (pending.length) {
+    after(async () => {
+      for (const p of pending) {
+        await attachInboundMedia(p).catch((err) => console.error("[whatsapp] falha ao anexar mídia", err));
+      }
+    });
   }
   return Response.json({ ok: true, processed: results.length });
 }

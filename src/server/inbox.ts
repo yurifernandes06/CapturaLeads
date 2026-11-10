@@ -84,8 +84,12 @@ export async function countAwaiting(userId: string) {
  */
 export async function conversationVersion(leadId?: string) {
   const [row] = await db
-    .select({ v: max(a.createdAt), n: count() })
+    .select({
+      v: max(a.createdAt),
+      n: count(),
+      m: sql<number>`coalesce(sum(json_extract(${a.meta}, '$.media.key') is not null), 0)`,
+    })
     .from(a)
     .where(leadId ? eq(a.leadId, leadId) : inArray(a.type, [...MESSAGE_TYPES]));
-  return `${row?.v?.getTime() ?? 0}.${row?.n ?? 0}`;
+  return `${row?.v?.getTime() ?? 0}.${row?.n ?? 0}.${row?.m ?? 0}`;
 }
