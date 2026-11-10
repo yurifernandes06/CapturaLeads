@@ -32,21 +32,51 @@ async function notify(userId: string | null, leadId: string, type: "new_lead" | 
  * Baixa o anexo do provedor e guarda no storage. Falha não derruba a mensagem:
  * ela entra só com o rótulo ("📷 Imagem") e o erro vai para o log.
  */
-async function storeInboundMedia(msg: InboundMessage): Promise<StoredMedia | undefined> {
-  if (!msg.media) return undefined;
+async function storeInboundMedia(media: InboundMessage["media"]): Promise<StoredMedia | undefined> {
+  if (!media) return undefined;
   try {
-    const file = await whatsapp().downloadMedia(msg.media);
+    const file = await whatsapp().downloadMedia(media);
     const saved = await saveMedia(file.data, file.mimeType);
-    return { ...saved, kind: msg.media.kind, fileName: msg.media.fileName, caption: msg.media.caption };
+    return { ...saved, kind: media.kind, fileName: media.fileName, caption: media.caption };
   } catch (err) {
     console.error("[whatsapp] falha ao baixar mídia", err);
     return undefined;
   }
 }
 
-export async function handleInbound(msg: InboundMessage) {
+/** Anexo que ficou para baixar depois de responder ao provedor (ver `attachInboundMedia`). */
+export type PendingMedia = { activityId: string; media: NonNullable<InboundMessage["media"]> };
+
+/**
+ * Baixa o anexo de uma mensagem já registrada e o liga à atividade.
+ * Roda fora do ciclo do webhook (`after`), para o provedor não esperar o download.
+ */
+export async function attachInboundMedia({ activityId, media: pending }: PendingMedia) {
+  const media = await storeInboundMedia(pending);
+  if (!media) return false;
+  const activity = await db
+    .select({ meta: schema.activities.meta })
+    .from(schema.activities)
+    .where(eq(schema.activities.id, activityId))
+    .get();
+  if (!activity) return false;
+  await db
+    .update(schema.activities)
+    .set({ meta: { ...activity.meta, media } })
+    .where(eq(schema.activities.id, activityId));
+  return true;
+}
+
+/**
+ * Processa uma mensagem recebida. Com `deferMedia`, o anexo não é baixado aqui:
+ * a mensagem entra na hora (só com o rótulo) e o anexo volta em `pendingMedia`.
+ */
+export async function handleInbound(msg: InboundMessage, opts: { deferMedia?: boolean } = {}) {
   if (!msg.from || (await alreadyProcessed(msg.providerMessageId))) return { skipped: true as const };
-  const media = await storeInboundMedia(msg);
+  const defer = Boolean(opts.deferMedia && msg.media);
+  const media = defer ? undefined : await storeInboundMedia(msg.media);
+  const pending = (activityId: string): PendingMedia | undefined =>
+    defer && msg.media ? { activityId, media: msg.media } : undefined;
   const meta =
     msg.providerMessageId || media
       ? { ...(msg.providerMessageId && { providerMessageId: msg.providerMessageId }), ...(media && { media }) }
@@ -56,29 +86,33 @@ export async function handleInbound(msg: InboundMessage) {
   if (msg.fromMe) {
     const lead = await findLeadByPhone(msg.from);
     if (!lead) return { skipped: true as const };
-    await recordActivity(lead.id, "whatsapp_out", { body: msg.text, meta: { ...meta, viaPhone: true }, at: msg.at });
-    return { leadId: lead.id, created: false };
+    const activity = await recordActivity(lead.id, "whatsapp_out", {
+      body: msg.text,
+      meta: { ...meta, viaPhone: true },
+      at: msg.at,
+    });
+    return { leadId: lead.id, created: false, pendingMedia: pending(activity.id) };
   }
 
   const existing = await findLeadByPhone(msg.from);
   if (existing) {
-    await recordActivity(existing.id, "whatsapp_in", { body: msg.text, meta, at: msg.at });
+    const activity = await recordActivity(existing.id, "whatsapp_in", { body: msg.text, meta, at: msg.at });
     // Lead perdido que voltou a falar: reabre para não sumir da fila.
     if (existing.stage === "lost") {
       await db.update(schema.leads).set({ stage: "contacted", closedAt: null, lostReason: null }).where(eq(schema.leads.id, existing.id));
       await recordActivity(existing.id, "system", { body: "Lead voltou a falar no WhatsApp e foi reaberto" });
     }
     await notify(existing.ownerId, existing.id, "new_message", `Nova mensagem de ${existing.name}`, msg.text);
-    return { leadId: existing.id, created: false };
+    return { leadId: existing.id, created: false, pendingMedia: pending(activity.id) };
   }
 
   const { lead } = await createLead(
     { name: msg.name?.trim() || formatPhone(msg.from), phone: msg.from, source: "whatsapp", message: msg.text },
     { autoAssign: true, inbound: true },
   );
-  await recordActivity(lead.id, "whatsapp_in", { body: msg.text, meta, at: msg.at });
+  const activity = await recordActivity(lead.id, "whatsapp_in", { body: msg.text, meta, at: msg.at });
   await notify(lead.ownerId, lead.id, "new_lead", `Novo lead pelo WhatsApp: ${lead.name}`, msg.text);
-  return { leadId: lead.id, created: true };
+  return { leadId: lead.id, created: true, pendingMedia: pending(activity.id) };
 }
 
 export async function sendToLead(leadId: string, body: string, userId: string) {
