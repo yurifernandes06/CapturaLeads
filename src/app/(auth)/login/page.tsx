@@ -37,7 +37,7 @@ export default function LoginPage(props: PageProps<"/login">) {
         <Logo className="relative" />
 
         <div className="relative max-w-lg">
-          <p className="mb-5 flex items-center gap-2 eyebrow text-primary">
+          <p className="mb-5 flex items-center gap-2 eyebrow text-primary-text">
             <span aria-hidden className="h-px w-8 bg-primary" /> Central de leads
           </p>
           <h2 className="font-heading text-[2.75rem] leading-[1.05] font-semibold tracking-tight text-balance text-white">
@@ -50,7 +50,7 @@ export default function LoginPage(props: PageProps<"/login">) {
           <ul className="mt-10 grid gap-5">
             {HIGHLIGHTS.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex gap-4">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-primary">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.03] text-primary-text">
                   <Icon className="size-[1.1rem]" />
                 </span>
                 <span>

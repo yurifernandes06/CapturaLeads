@@ -15,6 +15,7 @@ export function SettingsTabs() {
           <Link
             key={tab.href}
             href={tab.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "rounded-lg px-3.5 py-1.5 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground",
               active && "bg-primary text-primary-foreground shadow-[0_6px_20px_-10px_var(--primary)] hover:text-primary-foreground",

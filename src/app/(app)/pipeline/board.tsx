@@ -114,7 +114,7 @@ export function Board({ leads }: { leads: BoardLead[] }) {
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <Link href={`/leads/${lead.id}`} className="min-w-0 font-medium hover:text-primary">
+                    <Link href={`/leads/${lead.id}`} className="min-w-0 font-medium hover:text-primary-text">
                       <span className="line-clamp-2 text-sm">{lead.name}</span>
                     </Link>
                     <PriorityBadge priority={lead.priority} showLabel={false} />

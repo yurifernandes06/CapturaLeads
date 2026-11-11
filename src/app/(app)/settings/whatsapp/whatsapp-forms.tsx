@@ -104,11 +104,11 @@ export function SimulateInbound() {
         <Label htmlFor="sim-text">Mensagem</Label>
         <Textarea id="sim-text" name="text" rows={3} defaultValue="Oi! Quero saber o preço do plano anual." required />
       </div>
-      <SubmitButton pending={pending} className="bg-whatsapp text-white hover:bg-whatsapp/90">
+      <SubmitButton pending={pending} className="bg-whatsapp text-black hover:bg-whatsapp/90">
         Simular recebimento
       </SubmitButton>
       {state.ok && state.data ? (
-        <Link href={`/leads/${state.data.leadId}`} className="text-sm font-medium text-primary hover:underline">
+        <Link href={`/leads/${state.data.leadId}`} className="text-sm font-medium text-primary-text hover:underline">
           Abrir lead →
         </Link>
       ) : null}

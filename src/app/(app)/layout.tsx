@@ -56,6 +56,12 @@ async function MobileNavWithBadges() {
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-svh">
+      <a
+        href="#conteudo"
+        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Pular para o conteúdo
+      </a>
       <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 pt-5 pb-4 text-sidebar-foreground lg:flex">
         <Link href="/dashboard" className="mb-8 px-2">
           <Logo className="text-sidebar-accent-foreground" />
@@ -65,7 +71,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <SidebarNav />
         </Suspense>
         <div className="mt-auto rounded-xl border border-sidebar-border bg-gradient-to-b from-primary/12 to-transparent p-3.5">
-          <p className="eyebrow text-primary">Atalho</p>
+          <p className="eyebrow text-primary-text">Atalho</p>
           <p className="mt-1.5 text-xs leading-relaxed text-sidebar-foreground/70">
             Digite <kbd className="rounded border border-sidebar-border bg-sidebar-accent px-1 font-mono text-[0.65rem]">/</kbd>{" "}
             no chat para usar respostas rápidas.
@@ -86,7 +92,13 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <CurrentUserMenu />
           </Suspense>
         </header>
-        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">{children}</main>
+        <main
+          id="conteudo"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-10"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

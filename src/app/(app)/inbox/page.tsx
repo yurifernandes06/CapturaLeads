@@ -194,7 +194,7 @@ export default async function InboxPage(props: PageProps<"/inbox">) {
           ) : (
             <div className="grid flex-1 place-items-center p-6 text-center">
               <div className="grid justify-items-center gap-2 text-muted-foreground">
-                <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/25">
+                <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary-text ring-1 ring-primary/25">
                   <WhatsAppIcon className="size-6" />
                 </span>
                 <p className="text-sm">Escolha uma conversa para ver as mensagens.</p>

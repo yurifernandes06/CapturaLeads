@@ -33,7 +33,7 @@ export function ColumnChart({
         <div className="absolute inset-x-0 bottom-0 border-t border-border" />
         <ol className="absolute inset-0 flex items-end gap-[2px] pr-8">
           {data.map((d) => (
-            <li key={d.key} className="group relative flex h-full flex-1 items-end" tabIndex={0}>
+            <li key={d.key} aria-hidden className="group relative flex h-full flex-1 items-end">
               <div
                 className="w-full rounded-t-[3px] bg-gradient-to-t from-primary/35 to-primary/90 transition-colors group-hover:from-primary/60 group-hover:to-primary group-focus-visible:to-primary"
                 style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value ? 3 : 0 }}
@@ -49,6 +49,17 @@ export function ColumnChart({
           ))}
         </ol>
       </div>
+      <table className="sr-only">
+        <caption>{label}</caption>
+        <tbody>
+          {data.map((d) => (
+            <tr key={d.key}>
+              <th scope="row">{d.key.split("-").reverse().join("/")}</th>
+              <td>{formatValue(d.value)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <div className="flex gap-[2px] pr-8 text-[10px] text-muted-foreground">
         {data.map((d, i) => (
           <span key={d.key} className="flex-1 text-center tabular">

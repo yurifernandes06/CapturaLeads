@@ -168,7 +168,7 @@ export function WhatsAppComposer({
         </span>
         <Button
           size="sm"
-          className="bg-whatsapp text-white hover:bg-whatsapp/90"
+          className="bg-whatsapp text-black hover:bg-whatsapp/90"
           disabled={pending || !text.trim()}
           onClick={send}
         >
