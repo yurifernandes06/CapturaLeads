@@ -49,7 +49,12 @@ let cached: Env | undefined;
 
 export function env(): Env {
   if (!cached) {
-    const parsed = schema.safeParse(process.env);
+    // A integração Turso da Vercel cria TURSO_DATABASE_URL/TURSO_AUTH_TOKEN: aceitamos os dois nomes.
+    const parsed = schema.safeParse({
+      ...process.env,
+      DATABASE_URL: process.env.DATABASE_URL ?? process.env.TURSO_DATABASE_URL,
+      DATABASE_AUTH_TOKEN: process.env.DATABASE_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN,
+    });
     if (!parsed.success) {
       throw new Error(`Variáveis de ambiente inválidas: ${z.prettifyError(parsed.error)}`);
     }
