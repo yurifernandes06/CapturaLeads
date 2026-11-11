@@ -18,6 +18,7 @@ import { listLeads, listOwners, listTags } from "@/server/leads/queries";
 import { sweepIfStale } from "@/server/sla/service";
 import { LeadFiltersBar } from "./lead-filters";
 import { NewLeadDialog } from "./new-lead-dialog";
+import { getSetting } from "@/server/settings";
 
 export const metadata: Metadata = { title: "Leads" };
 
@@ -26,7 +27,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
   const filters = parseLeadFilters(await props.searchParams);
   await sweepIfStale();
   const [{ rows, total, page, pageCount }, owners, tags] = await Promise.all([
-    listLeads(filters, user.id),
+    getSetting("sla").then((sla) => listLeads(filters, user.id, sla.timezone)),
     listOwners(),
     listTags(),
   ]);
