@@ -25,9 +25,12 @@ import type { ActionResult } from "@/lib/action-result";
 import { PRIORITIES, PRIORITY_META } from "@/lib/leads";
 import { saveFormAction, setFormActiveAction } from "./actions";
 import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
+import { slugify } from "@/lib/slug";
 
 export function FormDialog({ form }: { form?: Form }) {
   const [open, setOpen] = useState(false);
+  const [slugPreview, setSlugPreview] = useState(form?.slug ?? "");
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
   const [state, action, pending] = useActionState(async (prev: ActionResult, formData: FormData) => {
     const res = await saveFormAction(prev, formData);
     if (res.ok) {
@@ -60,7 +63,17 @@ export function FormDialog({ form }: { form?: Form }) {
               <Input id="ff-name" name="name" defaultValue={form?.name} placeholder="Anúncio Black Friday" required />
             </Field>
             <Field label="Endereço (/f/…)" htmlFor="ff-slug">
-              <Input id="ff-slug" name="slug" defaultValue={form?.slug} placeholder="gerado do nome" />
+              <Input
+                id="ff-slug"
+                name="slug"
+                defaultValue={form?.slug}
+                placeholder="gerado do nome"
+                onChange={(e) => setSlugPreview(e.target.value)}
+                aria-describedby="ff-slug-preview"
+              />
+              <p id="ff-slug-preview" className="truncate font-mono text-xs text-muted-foreground">
+                {origin}/f/{slugify(slugPreview) || "…"}
+              </p>
             </Field>
           </div>
           <Field label="Título para o lead" htmlFor="ff-title">

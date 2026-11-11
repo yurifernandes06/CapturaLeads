@@ -11,3 +11,12 @@ export async function isActiveFormSlug(slug: string): Promise<boolean> {
     .get();
   return Boolean(row);
 }
+
+/** Título e descrição públicos do formulário (metadata e imagem de compartilhamento). */
+export async function getPublicFormMeta(slug: string) {
+  return db
+    .select({ title: schema.forms.title, description: schema.forms.description })
+    .from(schema.forms)
+    .where(and(eq(schema.forms.slug, slug), eq(schema.forms.active, true)))
+    .get();
+}

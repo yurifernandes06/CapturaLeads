@@ -2,15 +2,16 @@
 
 import { CheckCircle2Icon } from "lucide-react";
 import Script from "next/script";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { WhatsAppIcon } from "@/components/leads/badges";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
-import { whatsappLink } from "@/lib/phone";
+import { isValidPhone, whatsappLink } from "@/lib/phone";
 import { submitPublicForm } from "./actions";
 import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
+import { cn } from "@/lib/utils";
 
 type FormView = {
   slug: string;
@@ -50,6 +51,9 @@ export function PublicLeadForm({
   turnstileSiteKey?: string;
 }) {
   const [phone, setPhone] = useState("");
+  // Só reclama do telefone depois que a pessoa sai do campo (não enquanto digita).
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const successRef = useRef<HTMLHeadingElement>(null);
   const [name, setName] = useState("");
   const [page, setPage] = useState<{ referrer?: string; landing_page?: string }>({});
   const [state, action, pending] = useActionState<ActionResult, FormData>(submitPublicForm, { ok: false });
@@ -69,15 +73,25 @@ export function PublicLeadForm({
     if (state.error && turnstileSiteKey) window.turnstile?.reset();
   }, [state, turnstileSiteKey]);
 
+  // Sucesso: leva o foco (e o leitor de tela) para a confirmação.
+  useEffect(() => {
+    if (state.ok) successRef.current?.focus();
+  }, [state.ok]);
+
+  const phoneInvalid = phoneTouched && phone.length > 0 && !isValidPhone(phone);
+  const phoneValid = phone.length > 0 && isValidPhone(phone);
+
   const hidden = { ...attribution, ...Object.fromEntries(Object.entries(page).filter(([, v]) => v)) };
 
   if (state.ok) {
     return (
-      <div className="rounded-2xl border bg-card p-8 text-center shadow-[0_30px_80px_-40px_black]">
+      <div role="status" className="animate-in fade-in zoom-in-95 rounded-2xl border bg-card p-8 text-center shadow-[0_30px_80px_-40px_black] duration-300">
         <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-[0_12px_36px_-12px_var(--primary)]">
           <CheckCircle2Icon className="size-8" />
         </span>
-        <h1 className="mt-5 font-heading text-2xl font-semibold tracking-tight">Tudo certo!</h1>
+        <h1 ref={successRef} tabIndex={-1} className="mt-5 font-heading text-2xl font-semibold tracking-tight outline-none">
+          Tudo certo!
+        </h1>
         <p className="mt-2 text-muted-foreground">{form.successMessage}</p>
         {form.whatsappNumber ? (
           <a
@@ -137,8 +151,16 @@ export function PublicLeadForm({
             required
             value={phone}
             onChange={(e) => setPhone(maskPhone(e.target.value))}
-            className="h-11"
+            onBlur={() => setPhoneTouched(true)}
+            aria-invalid={phoneInvalid || undefined}
+            aria-describedby={phoneInvalid ? "pf-phone-error" : undefined}
+            className={cn("h-11", phoneValid && "border-success/60 focus-visible:ring-success/30")}
           />
+          {phoneInvalid ? (
+            <p id="pf-phone-error" className="text-xs text-destructive">
+              Confira o número: use DDD + número, ex. (11) 98765-4321.
+            </p>
+          ) : null}
         </div>
         {form.askEmail ? (
           <div className="grid gap-2">
