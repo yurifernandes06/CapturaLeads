@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { adNetworkOf, hostOf } from "@/lib/attribution";
 import { formatCurrency, formatDateTime, formatDuration, formatRelative, initials } from "@/lib/format";
 import { SOURCE_LABEL, STAGE_META } from "@/lib/leads";
+import { canReassign } from "@/lib/permissions";
 import { formatPhone, whatsappLink } from "@/lib/phone";
 import { evaluateSla } from "@/lib/sla/engine";
 import { suggestedDueAt, toLocalDateTime } from "@/lib/tasks";
@@ -206,7 +207,12 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
                 leadId={lead.id}
                 ownerId={lead.ownerId}
                 owners={owners.filter((o) => o.active || o.id === lead.ownerId).map(({ id, name }) => ({ id, name }))}
+                readOnly={!canReassign(user, lead.ownerId, user.id)}
+                allowUnassign={user.role === "admin"}
               />
+              {!canReassign(user, lead.ownerId, user.id) ? (
+                <p className="mt-2 text-xs text-muted-foreground">Só o responsável ou um admin pode repassar este lead.</p>
+              ) : null}
               {!ownerName ? <p className="mt-2 text-xs text-warning">Este lead ainda não tem dono.</p> : null}
             </CardContent>
           </Card>
