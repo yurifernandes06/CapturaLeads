@@ -80,14 +80,15 @@ export async function countAwaiting(userId: string) {
 
 /**
  * "Versão" das conversas para o polling da tela: muda quando entra ou sai qualquer
- * atividade (do lead, se informado). Barato: um max() em coluna indexada.
+ * atividade (do lead, se informado). Barato: max/count sobre o índice (type, created_at)
+ * ou (lead_id, created_at); anexos contados pela coluna media_key, sem ler JSON.
  */
 export async function conversationVersion(leadId?: string) {
   const [row] = await db
     .select({
       v: max(a.createdAt),
       n: count(),
-      m: sql<number>`coalesce(sum(json_extract(${a.meta}, '$.media.key') is not null), 0)`,
+      m: count(a.mediaKey),
     })
     .from(a)
     .where(leadId ? eq(a.leadId, leadId) : inArray(a.type, [...MESSAGE_TYPES]));

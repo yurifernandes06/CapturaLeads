@@ -64,7 +64,7 @@ export async function attachInboundMedia({ activityId, media: pending }: Pending
   if (!activity) return false;
   await db
     .update(schema.activities)
-    .set({ meta: { ...activity.meta, media } })
+    .set({ meta: { ...activity.meta, media }, mediaKey: media.key })
     .where(eq(schema.activities.id, activityId));
   return true;
 }

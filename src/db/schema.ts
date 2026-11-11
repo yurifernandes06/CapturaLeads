@@ -42,16 +42,20 @@ export const users = sqliteTable("users", {
   createdAt: createdAt(),
 });
 
-export const sessions = sqliteTable("sessions", {
-  /** sha256 do token do cookie — o token em si nunca é salvo. */
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expiresAt: timestamp("expires_at").notNull(),
-  userAgent: text("user_agent"),
-  createdAt: createdAt(),
-});
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    /** sha256 do token do cookie — o token em si nunca é salvo. */
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at").notNull(),
+    userAgent: text("user_agent"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId), index("sessions_expires_idx").on(t.expiresAt)],
+);
 
 /** Links de redefinição de senha: uso único e curta duração. */
 export const passwordResets = sqliteTable("password_resets", {
@@ -125,6 +129,7 @@ export const leads = sqliteTable(
     index("leads_owner_idx").on(t.ownerId),
     index("leads_created_idx").on(t.createdAt),
     index("leads_sla_idx").on(t.slaStatus, t.slaDueAt),
+    index("leads_form_idx").on(t.formId),
   ],
 );
 
@@ -141,10 +146,13 @@ export const activities = sqliteTable(
     meta: text("meta", { mode: "json" }).$type<Record<string, unknown>>(),
     /** Id da mensagem no provedor do WhatsApp: único para descartar webhooks reenviados. */
     providerMessageId: text("provider_message_id"),
+    /** Chave do anexo (espelho de meta.media.key) para o polling da inbox contar sem ler JSON. */
+    mediaKey: text("media_key"),
     createdAt: createdAt(),
   },
   (t) => [
     index("activities_lead_idx").on(t.leadId, t.createdAt),
+    index("activities_type_idx").on(t.type, t.createdAt),
     uniqueIndex("activities_provider_message_unique").on(t.providerMessageId),
   ],
 );
