@@ -6,6 +6,7 @@ import { db, schema } from "@/db";
 import { env } from "@/lib/env";
 import { captureLead, captureSchema } from "@/server/capture/service";
 import { rateLimit } from "@/server/rate-limit";
+import { clientIp } from "@/server/client-ip";
 
 /**
  * API pública de captura.
@@ -36,7 +37,7 @@ export function OPTIONS() {
 export async function POST(request: NextRequest) {
   if (!validKey(request)) return json({ error: "API key inválida." }, 401);
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  const ip = clientIp(request.headers);
   if (!(await rateLimit(`api:${ip}`, 60, 60_000)).ok) return json({ error: "Muitas requisições." }, 429);
 
   const body = await request.json().catch(() => null);

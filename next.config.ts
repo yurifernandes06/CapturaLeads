@@ -5,15 +5,20 @@ const isDev = process.env.NODE_ENV === "development";
 const isHttps = Boolean(process.env.VERCEL);
 
 /** CSP sem nonce (mantém páginas estáticas); `frame-ancestors` varia entre painel e formulário público. */
-function csp(frameAncestors: string) {
+/** Captcha do formulário público (Cloudflare Turnstile): script + iframe do widget. */
+const TURNSTILE = "https://challenges.cloudflare.com";
+
+function csp(frameAncestors: string, thirdParty: string[] = []) {
+  const extra = thirdParty.length ? ` ${thirdParty.join(" ")}` : "";
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${extra}`,
+    `frame-src 'self'${extra}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "media-src 'self' blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src 'self'${extra}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -40,7 +45,7 @@ const nextConfig: NextConfig = {
       {
         // Formulário público: pode ser incorporado em qualquer site (snippet de embed).
         source: "/f/:path*",
-        headers: [...baseHeaders, { key: "Content-Security-Policy", value: csp("*") }],
+        headers: [...baseHeaders, { key: "Content-Security-Policy", value: csp("*", [TURNSTILE]) }],
       },
     ];
   },

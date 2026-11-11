@@ -8,6 +8,10 @@ import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { renderTemplate } from "@/lib/templates";
 import { createLead, recordActivity } from "@/server/leads/service";
 import { whatsapp } from "@/server/whatsapp";
+import { rateLimit } from "@/server/rate-limit";
+
+/** Máximo de boas-vindas automáticas por hora (todas as origens). */
+const WELCOME_PER_HOUR = 60;
 
 /**
  * Entrada única para leads vindos de fora (formulário público e API).
@@ -108,7 +112,15 @@ export async function captureLead(
   }
 
   if (created && form?.welcomeMessage && lead.phone) {
-    await sendWelcome(lead, form.welcomeMessage);
+    // Teto global: mesmo burlando captcha e limites por IP, o número da empresa não vira disparador de spam.
+    if ((await rateLimit("welcome:global", WELCOME_PER_HOUR, 60 * 60 * 1000)).ok) {
+      await sendWelcome(lead, form.welcomeMessage);
+    } else {
+      console.warn("[capture] teto de boas-vindas por hora atingido; mensagem não enviada");
+      await recordActivity(lead.id, "system", {
+        body: "Boas-vindas automática não enviada: limite de envios por hora atingido.",
+      });
+    }
   }
 
   return { lead, created };
