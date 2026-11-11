@@ -115,3 +115,21 @@ quando: copie o backup para `data/dev.db` e suba o app localmente.
 - [ ] Formulário `/f/<slug>` cria lead e aparece no dashboard
 - [ ] Mensagem de teste no WhatsApp cria/atualiza o lead
 - [ ] Backup rodou pelo menos uma vez e foi restaurado em teste
+
+## Monitoramento e backup
+
+- **Health-check:** `GET /api/health` (público, sem segredos). Responde `503` se o banco cair ou se o SLA
+  não for recalculado há mais de 15 min (agendador parado). Cadastre a URL num monitor grátis
+  (UptimeRobot, Better Stack) para receber alerta.
+- **Erros do servidor:** saem nos logs da Vercel como JSON de uma linha (`"level":"error"`). Com
+  `ERROR_WEBHOOK_URL` definido, cada erro também gera um aviso por POST (ex.: Slack/Discord) só com o
+  código (`digest`), a rota e o método — a mensagem completa fica no log, que pode conter dados pessoais.
+- **Alertas de SLA no WhatsApp:** no máximo 30 por passada do cron; o sino do app avisa todos.
+- **Backup:** o Turso já guarda histórico (point-in-time). Para uma cópia extra, rode `npm run db:backup`
+  na sua máquina: gera um JSON com todas as tabelas em `backups/` (ignorado pelo git). Contém dados
+  pessoais de leads: guarde em local seguro e apague cópias antigas.
+- **Região:** deixe a função da Vercel na mesma região do banco Turso (Settings → Functions → Region),
+  senão cada consulta paga a ida e volta entre continentes.
+- **Cron 401:** se o GitHub Actions do SLA responder 401, os segredos divergiram: rode
+  `ROTATE_CRON=1 bash scripts/setup-vercel.sh`.
+
