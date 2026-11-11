@@ -35,6 +35,9 @@ const schema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
+  /** Opcional: recebe um POST JSON a cada erro de servidor (Slack/Discord/n8n...). */
+  ERROR_WEBHOOK_URL: z.string().url().optional(),
+
   /** Captcha do formulário público (Cloudflare Turnstile). Opcional: liga quando as duas existem. */
   TURNSTILE_SITE_KEY: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().optional(),

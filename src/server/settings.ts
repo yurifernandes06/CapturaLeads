@@ -1,6 +1,6 @@
 import "server-only";
 import { eq } from "drizzle-orm";
-import type { z } from "zod";
+import { z } from "zod";
 import { db, schema } from "@/db";
 import { DEFAULT_SLA_CONFIG, slaConfigSchema } from "@/lib/sla/config";
 import { DEFAULT_TEMPLATES, templatesSchema } from "@/lib/templates";
@@ -9,9 +9,16 @@ import { DEFAULT_TEMPLATES, templatesSchema } from "@/lib/templates";
  * Configurações tipadas guardadas na tabela `settings`. Cada chave tem um
  * schema e um default: valores inválidos ou ausentes caem no default.
  */
+const opsSchema = z.object({
+  lastSweepAt: z.number().nullable(),
+  lastSweepMs: z.number().nullable(),
+});
+
 const REGISTRY = {
   sla: { schema: slaConfigSchema, fallback: DEFAULT_SLA_CONFIG },
   whatsappTemplates: { schema: templatesSchema, fallback: DEFAULT_TEMPLATES },
+  /** Operação: quando o SLA foi recalculado pela última vez (health-check). */
+  ops: { schema: opsSchema, fallback: { lastSweepAt: null, lastSweepMs: null } },
 } satisfies Record<string, { schema: z.ZodType; fallback: unknown }>;
 
 type Registry = typeof REGISTRY;

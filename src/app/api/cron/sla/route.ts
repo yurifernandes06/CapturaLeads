@@ -8,6 +8,9 @@ import { sweepSla } from "@/server/sla/service";
  * (Vercel Cron, GitHub Actions, cron-job.org) com
  * `Authorization: Bearer <CRON_SECRET>`.
  */
+/** Com muitos leads o sweep passa do padrão; o plano Hobby permite até 60s. */
+export const maxDuration = 60;
+
 function authorized(request: NextRequest) {
   const secret = env().CRON_SECRET;
   if (!secret) return false;
