@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2Icon, Loader2Icon } from "lucide-react";
+import Script from "next/script";
 import { useActionState, useEffect, useState } from "react";
 import { WhatsAppIcon } from "@/components/leads/badges";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,12 @@ type FormView = {
   whatsappNumber: string | null;
 };
 
+declare global {
+  interface Window {
+    turnstile?: { reset: (widget?: string | HTMLElement) => void };
+  }
+}
+
 /** Máscara leve de telefone BR enquanto digita: (11) 98765-4321 */
 function maskPhone(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -32,7 +39,16 @@ function maskPhone(v: string) {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-export function PublicLeadForm({ form, attribution }: { form: FormView; attribution: Record<string, string> }) {
+export function PublicLeadForm({
+  form,
+  attribution,
+  turnstileSiteKey,
+}: {
+  form: FormView;
+  attribution: Record<string, string>;
+  /** Captcha Cloudflare Turnstile; ausente = desligado. */
+  turnstileSiteKey?: string;
+}) {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [page, setPage] = useState<{ referrer?: string; landing_page?: string }>({});
@@ -47,6 +63,11 @@ export function PublicLeadForm({ form, attribution }: { form: FormView; attribut
     const id = setTimeout(() => setPage(next), 0);
     return () => clearTimeout(id);
   }, [attribution.landing_page, attribution.referrer]);
+
+  // O token do captcha é de uso único: depois de um erro, o widget precisa gerar outro.
+  useEffect(() => {
+    if (state.error && turnstileSiteKey) window.turnstile?.reset();
+  }, [state, turnstileSiteKey]);
 
   const hidden = { ...attribution, ...Object.fromEntries(Object.entries(page).filter(([, v]) => v)) };
 
@@ -141,6 +162,13 @@ export function PublicLeadForm({ form, attribution }: { form: FormView; attribut
           </Label>
           <Textarea id="pf-message" name="message" rows={3} />
         </div>
+
+        {turnstileSiteKey ? (
+          <>
+            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+            <div className="cf-turnstile min-h-[65px]" data-sitekey={turnstileSiteKey} data-theme="dark" data-language="pt-br" />
+          </>
+        ) : null}
 
         {state.error ? (
           <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">

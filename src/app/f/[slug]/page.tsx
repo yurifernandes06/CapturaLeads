@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { db, schema } from "@/db";
 import { pickAttribution, safeUrl } from "@/lib/attribution";
 import { cn } from "@/lib/utils";
+import { turnstileSiteKey } from "@/server/turnstile";
 import { PublicLeadForm } from "./public-form";
 import { FormUnavailable } from "./unavailable";
 
@@ -41,6 +42,7 @@ async function FormLoader({ params, searchParams }: Pick<PageProps<"/f/[slug]">,
         whatsappNumber: form.whatsappNumber,
       }}
       attribution={attribution}
+      turnstileSiteKey={turnstileSiteKey()}
     />
   );
 }
