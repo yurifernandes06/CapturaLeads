@@ -66,8 +66,8 @@ function orderBy(sort: LeadFilters["sort"]) {
   }
 }
 
-export async function listLeads(filters: LeadFilters, currentUserId: string) {
-  const where = buildLeadWhere(filters, currentUserId);
+export async function listLeads(filters: LeadFilters, currentUserId: string, tz = DEFAULT_TIMEZONE) {
+  const where = buildLeadWhere(filters, currentUserId, tz);
   const page = filters.page ?? 1;
 
   const [rows, [totals]] = await Promise.all([
@@ -87,12 +87,12 @@ export async function listLeads(filters: LeadFilters, currentUserId: string) {
 }
 
 /** Lista para exportação (sem paginação, com teto de segurança). */
-export async function exportLeads(filters: LeadFilters, currentUserId: string) {
+export async function exportLeads(filters: LeadFilters, currentUserId: string, tz = DEFAULT_TIMEZONE) {
   return db
     .select({ lead: schema.leads, ownerName: schema.users.name })
     .from(schema.leads)
     .leftJoin(schema.users, eq(schema.leads.ownerId, schema.users.id))
-    .where(buildLeadWhere(filters, currentUserId))
+    .where(buildLeadWhere(filters, currentUserId, tz))
     .orderBy(...orderBy(filters.sort))
     .limit(10_000);
 }

@@ -36,6 +36,13 @@
       "when": 1794410112677,
       "tag": "0004_redefinicao_senha",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794411823033,
+      "tag": "0005_desempenho",
+      "breakpoints": true
     }
   ]
 }

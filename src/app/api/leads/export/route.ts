@@ -5,6 +5,7 @@ import { exportOwnerFilter } from "@/lib/permissions";
 import { getCurrentUser } from "@/server/auth/dal";
 import { exportLeads } from "@/server/leads/queries";
 import { audit } from "@/server/audit";
+import { getSetting } from "@/server/settings";
 
 /** CSV com ";" e BOM UTF-8 — abre direto no Excel em pt-BR. */
 function cell(value: unknown) {
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
   const parsed = parseLeadFilters(Object.fromEntries(request.nextUrl.searchParams));
   // Base inteira só para admin: vendedor exporta a própria carteira.
   const filters = { ...parsed, owner: exportOwnerFilter(user, parsed.owner) };
-  const rows = await exportLeads(filters, user.id);
+  const { timezone } = await getSetting("sla");
+  const rows = await exportLeads(filters, user.id, timezone);
   await audit(user, "lead.export", `${rows.length} leads exportados em CSV`, undefined, {
     count: rows.length,
     filters: Object.fromEntries(request.nextUrl.searchParams),

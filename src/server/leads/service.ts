@@ -180,6 +180,7 @@ export async function recordActivity(
       body: opts.body ?? null,
       meta: opts.meta,
       providerMessageId: typeof opts.meta?.providerMessageId === "string" ? opts.meta.providerMessageId : null,
+      mediaKey: (opts.meta?.media as { key?: string } | undefined)?.key ?? null,
       createdAt: at,
     })
     .returning();

@@ -90,6 +90,8 @@ async function notifyBreach(lead: schema.Lead, config: SlaConfig) {
   }
 }
 
+const SWEEP_BATCH = 100;
+
 let sweeping: Promise<{ updated: number; breached: number; reminded: number }> | null = null;
 let lastSweepAt = 0;
 
@@ -100,14 +102,20 @@ export function sweepSla() {
       const config = await getSetting("sla");
       const now = new Date();
       const open = await db.select().from(schema.leads).where(inArray(schema.leads.stage, OPEN_STAGES));
-      let updated = 0;
       let breached = 0;
+      // Só grava quem mudou, em lotes (uma ida à rede por lote no Turso).
+      const updates = open
+        .map((lead) => ({ lead, patch: slaPatch(lead, config, now) }))
+        .filter(({ lead, patch }) => changed(lead, patch));
+      for (let i = 0; i < updates.length; i += SWEEP_BATCH) {
+        const chunk = updates.slice(i, i + SWEEP_BATCH).map(({ lead, patch }) =>
+          db.update(schema.leads).set(patch).where(eq(schema.leads.id, lead.id)),
+        );
+        if (chunk.length) await db.batch(chunk as [(typeof chunk)[number], ...typeof chunk]);
+      }
+      const updated = updates.length;
       for (const lead of open) {
         const patch = slaPatch(lead, config, now);
-        if (changed(lead, patch)) {
-          await db.update(schema.leads).set(patch).where(eq(schema.leads.id, lead.id));
-          updated++;
-        }
         if (patch.slaStatus === "breached") {
           breached++;
           await notifyBreach({ ...lead, ...patch }, config);
