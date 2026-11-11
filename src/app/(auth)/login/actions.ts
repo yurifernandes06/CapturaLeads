@@ -8,6 +8,7 @@ import { db, schema } from "@/db";
 import { verifyDummy, verifyPassword } from "@/server/auth/password";
 import { createSession, destroySession } from "@/server/auth/session";
 import { rateLimit, resetRateLimit } from "@/server/rate-limit";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export type LoginState = { error?: string; email?: string };
 
@@ -18,10 +19,6 @@ const loginSchema = z.object({
 });
 
 /** Aceita só caminhos internos para evitar open redirect. */
-function safeNext(next?: string) {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-}
-
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   const email = String(formData.get("email") ?? "");
@@ -45,7 +42,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   await resetRateLimit(key);
   await createSession(user.id);
-  redirect(safeNext(parsed.data.next));
+  redirect(safeRedirectPath(parsed.data.next));
 }
 
 export async function logout() {
