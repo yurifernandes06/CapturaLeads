@@ -53,6 +53,18 @@ export const sessions = sqliteTable("sessions", {
   createdAt: createdAt(),
 });
 
+/** Links de redefinição de senha: uso único e curta duração. */
+export const passwordResets = sqliteTable("password_resets", {
+  /** sha256 do token do link — o token em si nunca é salvo. */
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: createdAt(),
+});
+
 export type User = typeof users.$inferSelect;
 
 export const leads = sqliteTable(
