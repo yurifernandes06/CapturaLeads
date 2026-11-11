@@ -8,17 +8,9 @@ import { errorMessage, type ActionResult } from "@/lib/action-result";
 import { PRIORITIES, parseTags } from "@/lib/leads";
 import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { assertUser } from "@/server/auth/dal";
+import { slugify } from "@/lib/slug";
 
 const PATH = "/settings/forms";
-
-const slugify = (v: string) =>
-  v
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
 
 const formSchema = z.object({
   id: z.string().optional(),
