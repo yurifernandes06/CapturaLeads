@@ -1,12 +1,14 @@
 /**
- * Tick interno do SLA: em servidores de longa duração (dev, VPS, Docker)
- * o próprio Next recalcula o SLA a cada minuto. Em serverless, desligue
- * com SLA_INTERNAL_TICK=false e use a rota /api/cron/sla.
+ * Boot do servidor: valida as variáveis de ambiente (falha rápido se a configuração
+ * de produção for insegura) e liga o tick interno do SLA em servidores de longa duração
+ * (dev, VPS, Docker). Na Vercel o tick fica desligado por padrão: use /api/cron/sla.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   if (process.env.NEXT_PHASE === "phase-production-build") return;
-  if (process.env.SLA_INTERNAL_TICK === "false") return;
+
+  const { env } = await import("./lib/env");
+  if (!env().SLA_INTERNAL_TICK) return;
 
   const { sweepSla } = await import("./server/sla/service");
   const tick = () =>

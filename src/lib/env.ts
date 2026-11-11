@@ -13,11 +13,8 @@ const schema = z.object({
 
   /** Protege a rota de cron do SLA (Authorization: Bearer <CRON_SECRET>). */
   CRON_SECRET: z.string().optional(),
-  /** Liga o tick interno do SLA no próprio servidor (útil em VPS/dev). */
-  SLA_INTERNAL_TICK: z
-    .enum(["true", "false"])
-    .default("true")
-    .transform((v) => v === "true"),
+  /** Liga o tick interno do SLA no próprio servidor (útil em VPS/dev). Na Vercel o padrão é desligado. */
+  SLA_INTERNAL_TICK: z.enum(["true", "false"]).optional(),
 
   /** Chave para a API pública de captura (header x-api-key). */
   PUBLIC_API_KEY: z.string().optional(),
@@ -43,22 +40,69 @@ const schema = z.object({
   BLOB_STORE_ID: z.string().optional(),
 });
 
-export type Env = z.infer<typeof schema>;
+/** Valores de exemplo do `.env.example`: nunca podem chegar à produção. */
+const PLACEHOLDER = /^troque-/i;
+const SECRET_KEYS = ["CRON_SECRET", "PUBLIC_API_KEY", "WHATSAPP_WEBHOOK_TOKEN", "WHATSAPP_CLOUD_VERIFY_TOKEN"] as const;
+
+type RawEnv = Record<string, string | undefined>;
+
+export type Env = Omit<z.infer<typeof schema>, "SLA_INTERNAL_TICK"> & { SLA_INTERNAL_TICK: boolean; IS_VERCEL: boolean };
+
+/** Erros de configuração que impedem o boot em produção (fora do build). */
+export function productionProblems(e: z.infer<typeof schema>, raw: RawEnv): string[] {
+  const problems: string[] = [];
+  const onVercel = Boolean(raw.VERCEL);
+
+  if (onVercel && e.DATABASE_URL.startsWith("file:")) {
+    problems.push("DATABASE_URL aponta para SQLite local, mas o disco da Vercel é somente leitura. Conecte o Turso (TURSO_DATABASE_URL).");
+  }
+  if (!e.DATABASE_URL.startsWith("file:") && !e.DATABASE_AUTH_TOKEN) {
+    problems.push("DATABASE_AUTH_TOKEN é obrigatório para banco remoto (Turso).");
+  }
+  if (!e.CRON_SECRET) problems.push("CRON_SECRET é obrigatório em produção (protege /api/cron/sla).");
+  for (const key of SECRET_KEYS) {
+    const value = e[key];
+    if (value && PLACEHOLDER.test(value)) problems.push(`${key} ainda tem o valor de exemplo do .env.example.`);
+  }
+  if (e.APP_URL.startsWith("http://localhost")) problems.push("APP_URL precisa ser a URL pública (está em localhost).");
+  return problems;
+}
+
+/** Valida e normaliza. Em produção (fora do build), configuração insegura derruba o boot com mensagem clara. */
+export function parseEnv(raw: RawEnv): Env {
+  const parsed = schema.safeParse({
+    ...raw,
+    // A integração Turso da Vercel cria TURSO_DATABASE_URL/TURSO_AUTH_TOKEN: aceitamos os dois nomes.
+    DATABASE_URL: raw.DATABASE_URL || raw.TURSO_DATABASE_URL || undefined,
+    DATABASE_AUTH_TOKEN: raw.DATABASE_AUTH_TOKEN || raw.TURSO_AUTH_TOKEN || undefined,
+  });
+  if (!parsed.success) {
+    throw new Error(`Variáveis de ambiente inválidas: ${z.prettifyError(parsed.error)}`);
+  }
+  const e = parsed.data;
+  const isVercel = Boolean(raw.VERCEL);
+
+  if (e.NODE_ENV === "production" && raw.NEXT_PHASE !== "phase-production-build") {
+    const problems = productionProblems(e, raw);
+    if (problems.length) {
+      throw new Error(`Configuração insegura para produção:\n- ${problems.join("\n- ")}`);
+    }
+    if (e.WHATSAPP_PROVIDER === "mock") {
+      console.warn("[env] WHATSAPP_PROVIDER=mock em produção: nenhuma mensagem real será enviada ou recebida.");
+    }
+  }
+
+  return {
+    ...e,
+    // Serverless não mantém processo vivo: o tick interno só liga por padrão fora da Vercel.
+    SLA_INTERNAL_TICK: e.SLA_INTERNAL_TICK ? e.SLA_INTERNAL_TICK === "true" : !isVercel,
+    IS_VERCEL: isVercel,
+  };
+}
 
 let cached: Env | undefined;
 
 export function env(): Env {
-  if (!cached) {
-    // A integração Turso da Vercel cria TURSO_DATABASE_URL/TURSO_AUTH_TOKEN: aceitamos os dois nomes.
-    const parsed = schema.safeParse({
-      ...process.env,
-      DATABASE_URL: process.env.DATABASE_URL ?? process.env.TURSO_DATABASE_URL,
-      DATABASE_AUTH_TOKEN: process.env.DATABASE_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN,
-    });
-    if (!parsed.success) {
-      throw new Error(`Variáveis de ambiente inválidas: ${z.prettifyError(parsed.error)}`);
-    }
-    cached = parsed.data;
-  }
+  cached ??= parseEnv(process.env);
   return cached;
 }

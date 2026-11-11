@@ -40,12 +40,16 @@ npm run admin:create -- voce@empresa.com "Seu Nome" "senha-forte"
 
 ## 2. Variáveis de ambiente
 
+> Em produção o app **não sobe** se faltar `CRON_SECRET`/`DATABASE_AUTH_TOKEN`, se `APP_URL` estiver em localhost,
+> se algum segredo ainda for o valor de exemplo (`troque-...`) ou se a Vercel apontar para SQLite local.
+> A mensagem de erro do boot lista exatamente o que corrigir.
+
 | Variável | Obrigatória | Observação |
 | --- | --- | --- |
 | `APP_URL` | sim | URL pública, ex.: `https://leads.suaempresa.com` (usada nos webhooks) |
 | `DATABASE_URL`, `DATABASE_AUTH_TOKEN` | sim | do passo 1 |
 | `CRON_SECRET` | sim | `openssl rand -hex 32` |
-| `SLA_INTERNAL_TICK` | sim | `false` na Vercel, `true` em VPS |
+| `SLA_INTERNAL_TICK` | não | padrão: desligado na Vercel, ligado em VPS |
 | `PUBLIC_API_KEY` | se usar a API | `openssl rand -hex 24` |
 | `WHATSAPP_PROVIDER` e variáveis do provedor | sim | ver README → Configuração do WhatsApp |
 | `WHATSAPP_WEBHOOK_TOKEN` | Evolution | token na query do webhook |
