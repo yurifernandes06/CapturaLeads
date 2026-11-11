@@ -1,6 +1,5 @@
 import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +7,7 @@ import { db, schema } from "@/db";
 import { pickAttribution, safeUrl } from "@/lib/attribution";
 import { cn } from "@/lib/utils";
 import { PublicLeadForm } from "./public-form";
+import { FormUnavailable } from "./unavailable";
 
 export const metadata: Metadata = { title: "Fale com a gente", robots: { index: false } };
 
@@ -18,7 +18,8 @@ async function FormLoader({ params, searchParams }: Pick<PageProps<"/f/[slug]">,
     .from(schema.forms)
     .where(and(eq(schema.forms.slug, slug), eq(schema.forms.active, true)))
     .get();
-  if (!form) notFound();
+  // Dentro do Suspense o notFound() cairia no 404 global do painel; mostramos a mensagem pública aqui.
+  if (!form) return <FormUnavailable />;
 
   // UTMs + clique do anúncio; no embed, o snippet repassa a página (lp) e o referrer (ref) do site-pai.
   const attribution: Record<string, string> = { ...pickAttribution(sp) };

@@ -6,7 +6,7 @@ import { isActiveFormSlug } from "@/server/forms";
  * acontece na DAL (src/server/auth/dal.ts), perto dos dados.
  */
 const SESSION_COOKIE = "cl_session";
-const PUBLIC_PREFIXES = ["/login", "/f/", "/api/public", "/api/webhooks", "/api/cron"];
+const PUBLIC_PREFIXES = ["/login", "/f/", "/form-indisponivel", "/api/public", "/api/webhooks", "/api/cron"];
 
 const FORM_PAGE = /^\/f\/([^/]+)\/?$/;
 
@@ -16,7 +16,7 @@ export async function proxy(request: NextRequest) {
   // A página do formulário faz streaming; notFound() lá dentro sairia com status 200.
   const formSlug = request.method === "GET" ? FORM_PAGE.exec(pathname)?.[1] : undefined;
   if (formSlug && !(await isActiveFormSlug(decodeURIComponent(formSlug)))) {
-    return NextResponse.rewrite(new URL("/_form-not-found", request.url), { status: 404 });
+    return NextResponse.rewrite(new URL("/form-indisponivel", request.url), { status: 404 });
   }
 
   const hasSession = request.cookies.has(SESSION_COOKIE);
