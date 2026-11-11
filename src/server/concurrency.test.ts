@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -52,6 +52,30 @@ describe("concorrência", () => {
     expect(rows).toHaveLength(1);
     expect(results.filter((r) => r.created)).toHaveLength(1);
     expect(new Set(results.map((r) => r.lead.id)).size).toBe(1);
+
+    // Atômico: exatamente uma atividade "created", sem órfãs das tentativas que perderam a corrida.
+    const created = await dbm.db
+      .select()
+      .from(dbm.schema.activities)
+      .where(and(eq(dbm.schema.activities.leadId, rows[0]!.id), eq(dbm.schema.activities.type, "created")));
+    expect(created).toHaveLength(1);
+    expect(created[0]!.meta).toMatchObject({ source: "form" });
+  });
+
+  it("muda a etapa e grava o histórico juntos", async () => {
+    const { lead } = await leads.createLead({ name: "Eva", phone: "11933334444", source: "manual" });
+    const [admin] = await dbm.db.select().from(dbm.schema.users).limit(1);
+    await leads.changeStage(lead.id, "lost", admin!.id, "Preço");
+
+    const [after] = await dbm.db.select().from(dbm.schema.leads).where(eq(dbm.schema.leads.id, lead.id));
+    expect(after).toMatchObject({ stage: "lost", lostReason: "Preço" });
+    expect(after!.closedAt).toBeInstanceOf(Date);
+    const history = await dbm.db
+      .select()
+      .from(dbm.schema.activities)
+      .where(and(eq(dbm.schema.activities.leadId, lead.id), eq(dbm.schema.activities.type, "stage_change")));
+    expect(history).toHaveLength(1);
+    expect(history[0]!.meta).toMatchObject({ from: "new", to: "lost", lostReason: "Preço" });
   });
 
   it("processa uma vez só o mesmo webhook reenviado em paralelo", async () => {

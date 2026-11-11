@@ -97,49 +97,53 @@ export async function createLead(
   }
 
   const ownerId = input.ownerId ?? (opts.autoAssign ? await pickNextOwner() : null);
-  const [lead] = await db
-    .insert(schema.leads)
-    .values({
-      name: input.name.trim() || phone || "Sem nome",
-      phone,
-      email: input.email?.trim().toLowerCase() || null,
-      company: input.company?.trim() || null,
-      source: input.source,
-      priority: input.priority ?? "medium",
-      ownerId,
-      value: input.value ?? 0,
-      tags: input.tags ?? [],
-      message: input.message ?? null,
-      utmSource: input.utmSource ?? null,
-      utmMedium: input.utmMedium ?? null,
-      utmCampaign: input.utmCampaign ?? null,
-      utmTerm: input.utmTerm ?? null,
-      utmContent: input.utmContent ?? null,
-      clickId: input.clickId ?? null,
-      referrer: input.referrer ?? null,
-      landingPage: input.landingPage ?? null,
-      formId: input.formId ?? null,
-      lastInboundAt: opts.inbound ? now : null,
-      createdAt: now,
-    })
-    // Corrida: outro request criou o mesmo telefone entre a busca e o insert.
-    .onConflictDoNothing({ target: schema.leads.phone })
-    .returning();
+  const leadId = crypto.randomUUID();
+  const a = schema.activities;
+  // Lead e atividade "created" no mesmo batch (atômico). O INSERT ... SELECT só grava a atividade
+  // se o lead entrou; em conflito de telefone, nenhum dos dois é gravado.
+  const [[lead]] = await db.batch([
+    db
+      .insert(schema.leads)
+      .values({
+        id: leadId,
+        name: input.name.trim() || phone || "Sem nome",
+        phone,
+        email: input.email?.trim().toLowerCase() || null,
+        company: input.company?.trim() || null,
+        source: input.source,
+        priority: input.priority ?? "medium",
+        ownerId,
+        value: input.value ?? 0,
+        tags: input.tags ?? [],
+        message: input.message ?? null,
+        utmSource: input.utmSource ?? null,
+        utmMedium: input.utmMedium ?? null,
+        utmCampaign: input.utmCampaign ?? null,
+        utmTerm: input.utmTerm ?? null,
+        utmContent: input.utmContent ?? null,
+        clickId: input.clickId ?? null,
+        referrer: input.referrer ?? null,
+        landingPage: input.landingPage ?? null,
+        formId: input.formId ?? null,
+        lastInboundAt: opts.inbound ? now : null,
+        createdAt: now,
+      })
+      // Corrida: outro request criou o mesmo telefone entre a busca e o insert.
+      .onConflictDoNothing({ target: schema.leads.phone })
+      .returning(),
+    db.run(sql`
+      insert into ${a} (${sql.identifier(a.id.name)}, ${sql.identifier(a.leadId.name)}, ${sql.identifier(a.userId.name)},
+        ${sql.identifier(a.type.name)}, ${sql.identifier(a.body.name)}, ${sql.identifier(a.meta.name)}, ${sql.identifier(a.createdAt.name)})
+      select ${crypto.randomUUID()}, ${leadId}, ${opts.actorId ?? null}, 'created', ${input.message ?? null},
+        ${JSON.stringify({ source: input.source, ownerId })}, ${now.getTime()}
+      where exists (select 1 from ${schema.leads} where ${schema.leads.id} = ${leadId})`),
+  ]);
 
   if (!lead) {
     const existing = phone ? await findLeadByPhone(phone) : undefined;
     if (!existing) throw new Error("Não foi possível criar o lead.");
     return repeatContact(existing);
   }
-
-  await db.insert(schema.activities).values({
-    leadId: lead.id,
-    userId: opts.actorId ?? null,
-    type: "created",
-    body: input.message ?? null,
-    meta: { source: input.source, ownerId },
-    createdAt: now,
-  });
 
   await refreshLeadSla(lead.id);
   return { lead, created: true };
@@ -228,26 +232,36 @@ export async function changeStage(leadId: string, stage: Stage, actorId: string,
 
   const now = new Date();
   const closing = isClosedStage(stage);
-  await db
-    .update(schema.leads)
-    .set({
-      stage,
-      lostReason: stage === "lost" ? (lostReason ?? "Outro") : null,
-      closedAt: closing ? now : null,
-      // Avançar o lead de "Novo" significa que alguém já fez contato.
-      firstResponseAt: lead.firstResponseAt ?? (lead.stage === "new" && stage !== "lost" ? now : null),
-    })
-    .where(eq(schema.leads.id, leadId));
-
-  await recordActivity(leadId, "stage_change", {
-    userId: actorId,
-    meta: { from: lead.stage, to: stage, lostReason: stage === "lost" ? (lostReason ?? "Outro") : undefined },
-    at: now,
-  });
+  // Etapa e histórico juntos (atômico): o funil e as métricas nunca divergem do histórico.
+  await db.batch([
+    db
+      .update(schema.leads)
+      .set({
+        stage,
+        lostReason: stage === "lost" ? (lostReason ?? "Outro") : null,
+        closedAt: closing ? now : null,
+        // Avançar o lead de "Novo" significa que alguém já fez contato.
+        firstResponseAt: lead.firstResponseAt ?? (lead.stage === "new" && stage !== "lost" ? now : null),
+        lastActivityAt: now,
+      })
+      .where(eq(schema.leads.id, leadId)),
+    db.insert(schema.activities).values({
+      leadId,
+      userId: actorId,
+      type: "stage_change",
+      meta: { from: lead.stage, to: stage, lostReason: stage === "lost" ? (lostReason ?? "Outro") : undefined },
+      createdAt: now,
+    }),
+  ]);
+  await refreshLeadSla(leadId);
   return { ...lead, stage };
 }
 
 export async function assignOwner(leadId: string, ownerId: string | null, actorId: string) {
-  await db.update(schema.leads).set({ ownerId }).where(eq(schema.leads.id, leadId));
-  await recordActivity(leadId, "assignment", { userId: actorId, meta: { ownerId } });
+  const now = new Date();
+  await db.batch([
+    db.update(schema.leads).set({ ownerId, lastActivityAt: now }).where(eq(schema.leads.id, leadId)),
+    db.insert(schema.activities).values({ leadId, userId: actorId, type: "assignment", meta: { ownerId }, createdAt: now }),
+  ]);
+  await refreshLeadSla(leadId);
 }
