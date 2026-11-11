@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { ACTIVITY_TYPES, PRIORITIES, SOURCES, STAGES } from "@/lib/leads";
 import { SLA_STATUSES } from "@/lib/sla/config";
+import { AUDIT_ACTIONS } from "@/lib/audit";
 
 /** Timestamps em ms (integer) — ordenáveis e sem ambiguidade de fuso. */
 export const timestamp = (name: string) => integer(name, { mode: "timestamp_ms" });
@@ -202,3 +203,23 @@ export const tasks = sqliteTable(
 );
 
 export type Task = typeof tasks.$inferSelect;
+
+/** Trilha de ações sensíveis (export, reatribuição, exclusão, usuários). Só inserção. */
+export const auditLogs = sqliteTable(
+  "audit_logs",
+  {
+    id: id(),
+    actorId: text("actor_id").references(() => users.id, { onDelete: "set null" }),
+    /** Nome no momento da ação: o registro continua legível se o usuário for removido. */
+    actorName: text("actor_name").notNull(),
+    action: text("action", { enum: AUDIT_ACTIONS }).notNull(),
+    summary: text("summary").notNull(),
+    targetType: text("target_type", { enum: ["lead", "user"] }),
+    targetId: text("target_id"),
+    meta: text("meta", { mode: "json" }).$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("audit_logs_created_idx").on(t.createdAt)],
+);
+
+export type AuditLog = typeof auditLogs.$inferSelect;
