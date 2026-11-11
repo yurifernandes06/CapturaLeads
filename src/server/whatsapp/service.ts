@@ -1,6 +1,7 @@
 import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { env } from "@/lib/env";
 import type { StoredMedia } from "@/lib/media";
 import { formatPhone } from "@/lib/phone";
 import { createLead, findLeadByPhone, recordActivity } from "@/server/leads/service";
@@ -137,7 +138,7 @@ export async function sendTaskReminder(input: {
   leadId: string;
   leadName: string;
 }) {
-  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const appUrl = env().APP_URL;
   const text = [
     `📝 *Tarefa vencida*`,
     `${input.userName.split(" ")[0]}, está na hora de: *${input.taskTitle}*`,
@@ -157,7 +158,7 @@ export async function sendSlaAlert(lead: schema.Lead) {
     .get();
   if (!owner?.phone) return;
 
-  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const appUrl = env().APP_URL;
   const text = [
     `⏰ *SLA estourado*`,
     `${owner.name.split(" ")[0]}, o lead *${lead.name}* está esperando resposta.`,
