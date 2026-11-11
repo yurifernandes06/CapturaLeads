@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { env } from "@/lib/env";
 import type { StoredMedia } from "@/lib/media";
@@ -8,6 +8,7 @@ import { createLead, findLeadByPhone, recordActivity } from "@/server/leads/serv
 import { saveMedia } from "@/server/media/storage";
 import { whatsapp } from "./index";
 import type { InboundMessage } from "./types";
+import { isUniqueViolation } from "@/db/errors";
 
 /**
  * Casos de uso do WhatsApp: receber (webhook) e enviar (tela do lead).
@@ -19,7 +20,7 @@ async function alreadyProcessed(providerMessageId?: string) {
   const hit = await db
     .select({ id: schema.activities.id })
     .from(schema.activities)
-    .where(sql`json_extract(${schema.activities.meta}, '$.providerMessageId') = ${providerMessageId}`)
+    .where(eq(schema.activities.providerMessageId, providerMessageId))
     .get();
   return Boolean(hit);
 }
@@ -73,6 +74,16 @@ export async function attachInboundMedia({ activityId, media: pending }: Pending
  * a mensagem entra na hora (só com o rótulo) e o anexo volta em `pendingMedia`.
  */
 export async function handleInbound(msg: InboundMessage, opts: { deferMedia?: boolean } = {}) {
+  try {
+    return await processInbound(msg, opts);
+  } catch (err) {
+    // Webhook reenviado em paralelo: o índice único do id da mensagem barrou a segunda gravação.
+    if (isUniqueViolation(err)) return { skipped: true as const };
+    throw err;
+  }
+}
+
+async function processInbound(msg: InboundMessage, opts: { deferMedia?: boolean }) {
   if (!msg.from || (await alreadyProcessed(msg.providerMessageId))) return { skipped: true as const };
   const defer = Boolean(opts.deferMedia && msg.media);
   const media = defer ? undefined : await storeInboundMedia(msg.media);

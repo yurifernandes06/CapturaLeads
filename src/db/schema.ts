@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { ACTIVITY_TYPES, PRIORITIES, SOURCES, STAGES } from "@/lib/leads";
 import { SLA_STATUSES } from "@/lib/sla/config";
 
@@ -102,7 +102,8 @@ export const leads = sqliteTable(
       .$onUpdateFn(() => new Date()),
   },
   (t) => [
-    index("leads_phone_idx").on(t.phone),
+    // Único: duas capturas simultâneas do mesmo número não viram dois leads (NULL não conflita).
+    uniqueIndex("leads_phone_unique").on(t.phone),
     index("leads_stage_idx").on(t.stage),
     index("leads_owner_idx").on(t.ownerId),
     index("leads_created_idx").on(t.createdAt),
@@ -121,9 +122,14 @@ export const activities = sqliteTable(
     type: text("type", { enum: ACTIVITY_TYPES }).notNull(),
     body: text("body"),
     meta: text("meta", { mode: "json" }).$type<Record<string, unknown>>(),
+    /** Id da mensagem no provedor do WhatsApp: único para descartar webhooks reenviados. */
+    providerMessageId: text("provider_message_id"),
     createdAt: createdAt(),
   },
-  (t) => [index("activities_lead_idx").on(t.leadId, t.createdAt)],
+  (t) => [
+    index("activities_lead_idx").on(t.leadId, t.createdAt),
+    uniqueIndex("activities_provider_message_unique").on(t.providerMessageId),
+  ],
 );
 
 export type Lead = typeof leads.$inferSelect;
