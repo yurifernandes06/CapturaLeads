@@ -100,20 +100,28 @@ export function OwnerSelect({
   leadId,
   ownerId,
   owners,
+  readOnly = false,
+  allowUnassign = true,
 }: {
   leadId: string;
   ownerId: string | null;
   owners: { id: string; name: string }[];
+  /** Vendedor olhando lead de outro: só leitura (o servidor também recusa). */
+  readOnly?: boolean;
+  /** Só admin pode deixar o lead sem responsável. */
+  allowUnassign?: boolean;
 }) {
   const { pending, run } = useAction();
   return (
     <NativeSelect
       aria-label="Responsável"
       value={ownerId ?? ""}
-      disabled={pending}
+      disabled={pending || readOnly}
       onChange={(e) => run(() => assignOwnerAction(leadId, e.target.value || null), "Responsável atualizado.")}
     >
-      <option value="">Sem responsável</option>
+      <option value="" disabled={!allowUnassign && ownerId !== null}>
+        Sem responsável
+      </option>
       {owners.map((o) => (
         <option key={o.id} value={o.id}>
           {o.name}

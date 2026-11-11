@@ -6,9 +6,10 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { errorMessage, type ActionResult } from "@/lib/action-result";
 import { PRIORITIES, SOURCES, STAGES, parseTags, type Stage } from "@/lib/leads";
+import { canReassign } from "@/lib/permissions";
 import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { assertUser } from "@/server/auth/dal";
-import { assignOwner, changeStage, createLead, findLeadByPhone, recordActivity } from "@/server/leads/service";
+import { assertActiveOwner, assignOwner, changeStage, createLead, findLeadByPhone, recordActivity } from "@/server/leads/service";
 
 function revalidateLead(id?: string) {
   revalidatePath("/leads");
@@ -55,6 +56,8 @@ export async function createLeadAction(
   try {
     const user = await assertUser();
     const data = leadFormSchema.parse(Object.fromEntries(formData));
+    const ownerId = data.ownerId === "auto" ? undefined : data.ownerId || user.id;
+    await assertActiveOwner(ownerId);
     const { lead, created } = await createLead(
       {
         name: data.name,
@@ -66,7 +69,7 @@ export async function createLeadAction(
         value: parseMoney(data.value),
         tags: parseTags(data.tags ?? ""),
         message: data.message,
-        ownerId: data.ownerId === "auto" ? undefined : data.ownerId || user.id,
+        ownerId,
       },
       { actorId: user.id, autoAssign: data.ownerId === "auto" },
     );
@@ -143,6 +146,16 @@ export async function moveStageAction(leadId: string, stage: Stage, lostReason?:
 export async function assignOwnerAction(leadId: string, ownerId: string | null): Promise<ActionResult> {
   try {
     const user = await assertUser();
+    const lead = await db
+      .select({ ownerId: schema.leads.ownerId })
+      .from(schema.leads)
+      .where(eq(schema.leads.id, leadId))
+      .get();
+    if (!lead) throw new Error("Lead não encontrado.");
+    if (!canReassign(user, lead.ownerId, ownerId)) {
+      throw new Error("Você só pode repassar leads seus ou sem responsável.");
+    }
+    await assertActiveOwner(ownerId);
     await assignOwner(leadId, ownerId, user.id);
     revalidateLead(leadId);
     return { ok: true };

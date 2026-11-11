@@ -257,6 +257,17 @@ export async function changeStage(leadId: string, stage: Stage, actorId: string,
   return { ...lead, stage };
 }
 
+/** Garante que o responsável existe e está ativo (ids vêm do cliente). */
+export async function assertActiveOwner(ownerId: string | null | undefined) {
+  if (!ownerId) return;
+  const owner = await db
+    .select({ id: schema.users.id })
+    .from(schema.users)
+    .where(and(eq(schema.users.id, ownerId), eq(schema.users.active, true)))
+    .get();
+  if (!owner) throw new Error("Responsável inválido ou desativado.");
+}
+
 export async function assignOwner(leadId: string, ownerId: string | null, actorId: string) {
   const now = new Date();
   await db.batch([

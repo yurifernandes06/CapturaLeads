@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { parseLeadFilters } from "@/lib/lead-filters";
 import { PRIORITY_META, SOURCE_LABEL, STAGE_META } from "@/lib/leads";
+import { exportOwnerFilter } from "@/lib/permissions";
 import { getCurrentUser } from "@/server/auth/dal";
 import { exportLeads } from "@/server/leads/queries";
 
@@ -16,8 +17,11 @@ export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new Response("Não autorizado", { status: 401 });
 
-  const filters = parseLeadFilters(Object.fromEntries(request.nextUrl.searchParams));
+  const parsed = parseLeadFilters(Object.fromEntries(request.nextUrl.searchParams));
+  // Base inteira só para admin: vendedor exporta a própria carteira.
+  const filters = { ...parsed, owner: exportOwnerFilter(user, parsed.owner) };
   const rows = await exportLeads(filters, user.id);
+  console.info(`[export] ${user.email} (${user.role}) exportou ${rows.length} leads`);
 
   const header = [
     "Nome",

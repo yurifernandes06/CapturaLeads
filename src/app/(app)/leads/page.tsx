@@ -46,7 +46,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
               nativeButton={false}
               render={<a href={`/api/leads/export${filtersToSearch({ ...filters, page: undefined })}`} />}
             >
-              <DownloadIcon /> Exportar CSV
+              <DownloadIcon /> {user.role === "admin" ? "Exportar CSV" : "Exportar meus leads"}
             </Button>
             <NewLeadDialog owners={activeOwners} currentUserId={user.id} />
           </>
