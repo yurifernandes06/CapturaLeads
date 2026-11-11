@@ -40,11 +40,19 @@ export function TaskList({ items, empty }: { items: TaskView[]; empty?: string }
       else if (done) toast.success("Tarefa concluída.");
     });
 
-  const remove = (task: TaskView) =>
+  const confirmRemove = (task: TaskView) =>
     startTransition(async () => {
       apply({ id: task.id, removed: true });
       const res = await deleteTaskAction(task.id);
       if (!res.ok) toast.error(res.error);
+      else toast.success("Tarefa excluída.");
+    });
+
+  // Exclusão não tem volta: confirma no toast antes de apagar.
+  const remove = (task: TaskView) =>
+    toast(`Excluir "${task.title}"?`, {
+      action: { label: "Excluir", onClick: () => confirmRemove(task) },
+      cancel: { label: "Cancelar", onClick: () => {} },
     });
 
   if (!optimistic.length) {
