@@ -1,11 +1,21 @@
 "use client";
 
+import { ArrowRightLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { PriorityBadge, WhatsAppIcon } from "@/components/leads/badges";
 import { LostReasonDialog } from "@/components/leads/lost-reason-dialog";
 import { SlaIndicator } from "@/components/leads/sla-indicator";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatCurrency, formatDuration } from "@/lib/format";
 import { STAGES, STAGE_META, type Priority, type Stage } from "@/lib/leads";
 import { whatsappLink } from "@/lib/phone";
@@ -85,7 +95,7 @@ export function Board({ leads }: { leads: BoardLead[] }) {
               if (id) move(id, stage);
             }}
             className={cn(
-              "flex w-72 shrink-0 snap-start flex-col rounded-xl border bg-black/50 transition-colors",
+              "flex max-h-[calc(100svh-13rem)] min-h-64 w-72 shrink-0 snap-start flex-col rounded-xl border bg-black/50 transition-colors",
               over === stage && dragging && "border-primary/60 bg-primary/[0.06] shadow-[0_0_40px_-20px_var(--primary)]",
             )}
           >
@@ -117,7 +127,10 @@ export function Board({ leads }: { leads: BoardLead[] }) {
                     <Link href={`/leads/${lead.id}`} className="min-w-0 font-medium hover:text-primary-text">
                       <span className="line-clamp-2 text-sm">{lead.name}</span>
                     </Link>
-                    <PriorityBadge priority={lead.priority} showLabel={false} />
+                    <div className="flex shrink-0 items-center gap-1">
+                      <PriorityBadge priority={lead.priority} showLabel={false} />
+                      <MoveMenu lead={lead} onMove={(stage) => move(lead.id, stage)} />
+                    </div>
                   </div>
                   {lead.company ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{lead.company}</p> : null}
                   <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -147,7 +160,7 @@ export function Board({ leads }: { leads: BoardLead[] }) {
               ))}
               {!items.length ? (
                 <p className="grid flex-1 place-items-center rounded-lg border border-dashed py-6 text-xs text-muted-foreground">
-                  Solte um lead aqui
+                  Nenhum lead nesta etapa
                 </p>
               ) : null}
             </div>
@@ -155,5 +168,36 @@ export function Board({ leads }: { leads: BoardLead[] }) {
         );
       })}
     </div>
+  );
+}
+
+/** Alternativa ao arrastar: funciona no toque (celular/tablet) e pelo teclado. */
+function MoveMenu({ lead, onMove }: { lead: BoardLead; onMove: (stage: Stage) => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`Mover ${lead.name} para outra etapa`}
+            className="text-muted-foreground opacity-70 group-hover:opacity-100 focus-visible:opacity-100"
+          />
+        }
+      >
+        <ArrowRightLeftIcon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Mover para</DropdownMenuLabel>
+          {STAGES.filter((s) => s !== lead.stage).map((stage) => (
+            <DropdownMenuItem key={stage} onClick={() => onMove(stage)}>
+              <span className={cn("size-2 rounded-full", STAGE_META[stage].dot)} aria-hidden />
+              {STAGE_META[stage].label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
