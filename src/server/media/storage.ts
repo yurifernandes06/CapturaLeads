@@ -1,8 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { get, put } from "@vercel/blob";
+import { del, get, put } from "@vercel/blob";
 import { env } from "@/lib/env";
 import { MAX_MEDIA_BYTES, baseMime, isValidMediaKey, mediaKey, mimeFromKey } from "@/lib/media";
 
@@ -49,4 +49,15 @@ export async function readMedia(key: string): Promise<{ body: BodyInit; contentT
   } catch {
     return null;
   }
+}
+
+/** Apaga anexos (LGPD/retenção). Chaves inválidas são ignoradas; arquivo ausente não é erro. */
+export async function deleteMedia(keys: string[]) {
+  const valid = keys.filter(isValidMediaKey);
+  if (!valid.length) return;
+  if (blobEnabled()) {
+    await del(valid);
+    return;
+  }
+  await Promise.all(valid.map((key) => rm(path.join(LOCAL_ROOT, key), { force: true })));
 }

@@ -96,6 +96,10 @@ export const leads = sqliteTable(
     slaDueAt: timestamp("sla_due_at"),
     /** Último alerta de estouro enviado — evita alertar duas vezes o mesmo ciclo. */
     slaNotifiedAt: timestamp("sla_notified_at"),
+    /** Quando o titular viu o aviso de privacidade (formulário público). */
+    privacyNoticeAt: timestamp("privacy_notice_at"),
+    /** Dados pessoais removidos a pedido do titular (LGPD). */
+    anonymizedAt: timestamp("anonymized_at"),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at")
       .notNull()

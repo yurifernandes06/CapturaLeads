@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon, PencilIcon, Trash2Icon, TrophyIcon, XCircleIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, PencilIcon, ShieldOffIcon, Trash2Icon, TrophyIcon, XCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { LeadFormFields, type LeadFormDefaults } from "@/components/leads/lead-f
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -25,7 +26,7 @@ import {
 import { NativeSelect } from "@/components/ui/native-select";
 import type { ActionResult } from "@/lib/action-result";
 import { OPEN_STAGES, STAGES, type Stage } from "@/lib/leads";
-import { assignOwnerAction, deleteLeadAction, moveStageAction, updateLeadAction } from "../actions";
+import { anonymizeLeadAction, assignOwnerAction, deleteLeadAction, moveStageAction, updateLeadAction } from "../actions";
 
 function useAction() {
   const [pending, startTransition] = useTransition();
@@ -203,6 +204,47 @@ export function DeleteLeadButton({ leadId, name }: { leadId: string; name: strin
               }
             >
               Excluir definitivamente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** LGPD: remove dados pessoais a pedido do titular, mantendo o lead nas métricas. */
+export function AnonymizeLeadButton({ leadId, name }: { leadId: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  return (
+    <>
+      <Button variant="ghost" size="icon" aria-label="Anonimizar lead (LGPD)" title="Anonimizar (LGPD)" onClick={() => setOpen(true)}>
+        <ShieldOffIcon />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Anonimizar lead?</DialogTitle>
+            <DialogDescription>
+              Use quando &quot;{name}&quot; pedir a exclusão dos dados (LGPD). Nome, telefone, e-mail, mensagens e anexos
+              serão apagados; etapa, origem e valor ficam para as métricas. Isso não pode ser desfeito.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const res = await anonymizeLeadAction(leadId);
+                  if (!res.ok) return void toast.error(res.error);
+                  toast.success("Dados do lead anonimizados.");
+                  setOpen(false);
+                })
+              }
+            >
+              Anonimizar
             </Button>
           </DialogFooter>
         </DialogContent>

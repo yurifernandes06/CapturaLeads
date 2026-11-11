@@ -64,9 +64,6 @@ async function Shell({ searchParams, children }: { searchParams: PageProps<"/f/[
       <div className="relative w-full max-w-md">
         {!embedded ? <Logo className="mb-8" /> : null}
         {children}
-        {!embedded ? (
-          <p className="mt-6 text-center text-xs text-muted-foreground">Seus dados são usados apenas para retornarmos o contato.</p>
-        ) : null}
       </div>
     </main>
   );
