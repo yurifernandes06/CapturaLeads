@@ -176,6 +176,14 @@ export function PublicLeadForm({
           </p>
         ) : null}
 
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Ao enviar, seus dados serão usados apenas para retornarmos o contato, conforme a{" "}
+          <a href="/privacidade" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-foreground">
+            Política de Privacidade
+          </a>
+          .
+        </p>
+
         <Button type="submit" size="lg" className="mt-1 h-12 text-base" disabled={pending}>
           {pending ? <Loader2Icon className="animate-spin" /> : null}
           {form.buttonText}
