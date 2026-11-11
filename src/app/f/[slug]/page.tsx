@@ -9,8 +9,23 @@ import { cn } from "@/lib/utils";
 import { turnstileSiteKey } from "@/server/turnstile";
 import { PublicLeadForm } from "./public-form";
 import { FormUnavailable } from "./unavailable";
+import { BRAND } from "@/lib/brand";
+import { getPublicFormMeta } from "@/server/forms";
 
-export const metadata: Metadata = { title: "Fale com a gente", robots: { index: false } };
+/** Título e descrição do próprio formulário: o link compartilhado no WhatsApp/Instagram mostra o preview certo. */
+export async function generateMetadata({ params }: PageProps<"/f/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const form = await getPublicFormMeta(slug);
+  const title = form?.title ?? "Fale com a gente";
+  const description = form?.description ?? `Deixe seu contato e ${BRAND.short} retorna rapidinho.`;
+  return {
+    title,
+    description,
+    robots: { index: false },
+    openGraph: { title, description, type: "website", siteName: BRAND.name },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 async function FormLoader({ params, searchParams }: Pick<PageProps<"/f/[slug]">, "params" | "searchParams">) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);

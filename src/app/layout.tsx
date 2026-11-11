@@ -22,6 +22,8 @@ const display = Sora({
 });
 
 export const metadata: Metadata = {
+  // URLs absolutas de imagens OG (preview de links compartilhados) usam a URL pública.
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
     default: BRAND.name,
     template: `%s · ${BRAND.name}`,
