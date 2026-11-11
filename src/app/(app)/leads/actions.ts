@@ -10,6 +10,7 @@ import { canReassign } from "@/lib/permissions";
 import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { assertUser } from "@/server/auth/dal";
 import { assertActiveOwner, assignOwner, changeStage, createLead, findLeadByPhone, recordActivity } from "@/server/leads/service";
+import { audit } from "@/server/audit";
 
 function revalidateLead(id?: string) {
   revalidatePath("/leads");
@@ -147,7 +148,7 @@ export async function assignOwnerAction(leadId: string, ownerId: string | null):
   try {
     const user = await assertUser();
     const lead = await db
-      .select({ ownerId: schema.leads.ownerId })
+      .select({ ownerId: schema.leads.ownerId, name: schema.leads.name })
       .from(schema.leads)
       .where(eq(schema.leads.id, leadId))
       .get();
@@ -157,6 +158,12 @@ export async function assignOwnerAction(leadId: string, ownerId: string | null):
     }
     await assertActiveOwner(ownerId);
     await assignOwner(leadId, ownerId, user.id);
+    if (lead.ownerId !== ownerId) {
+      await audit(user, "lead.reassign", `Responsável de "${lead.name}" alterado`, { type: "lead", id: leadId }, {
+        from: lead.ownerId,
+        to: ownerId,
+      });
+    }
     revalidateLead(leadId);
     return { ok: true };
   } catch (err) {
@@ -166,8 +173,16 @@ export async function assignOwnerAction(leadId: string, ownerId: string | null):
 
 export async function deleteLeadAction(leadId: string): Promise<ActionResult> {
   try {
-    await assertUser("admin");
-    await db.delete(schema.leads).where(eq(schema.leads.id, leadId));
+    const user = await assertUser("admin");
+    const [removed] = await db
+      .delete(schema.leads)
+      .where(eq(schema.leads.id, leadId))
+      .returning({ name: schema.leads.name, phone: schema.leads.phone });
+    if (removed) {
+      await audit(user, "lead.delete", `Lead "${removed.name}" excluído`, { type: "lead", id: leadId }, {
+        phone: removed.phone,
+      });
+    }
     revalidateLead();
     return { ok: true };
   } catch (err) {
