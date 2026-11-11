@@ -1,5 +1,6 @@
 import { MessageCircleIcon, TimerIcon, TrendingUpIcon } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { BRAND } from "@/lib/brand";
@@ -80,7 +81,9 @@ export default function LoginPage(props: PageProps<"/login">) {
             </Suspense>
           </div>
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            Problemas para entrar? Fale com o administrador do sistema.
+            <Link href="/esqueci-senha" className="underline-offset-2 hover:text-foreground hover:underline">
+              Esqueci a senha
+            </Link>
           </p>
         </div>
       </section>

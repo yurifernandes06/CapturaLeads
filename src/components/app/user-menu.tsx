@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, UserCogIcon } from "lucide-react";
+import Link from "next/link";
 import { useTransition } from "react";
 import { logout } from "@/app/(auth)/login/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -40,6 +41,9 @@ export function UserMenu({ user }: { user: { name: string; email: string; role: 
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/conta" />}>
+          <UserCogIcon /> Minha conta
+        </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" disabled={pending} onClick={() => startTransition(() => logout())}>
           <LogOutIcon /> Sair
         </DropdownMenuItem>

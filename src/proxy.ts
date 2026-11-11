@@ -6,7 +6,7 @@ import { isActiveFormSlug } from "@/server/forms";
  * acontece na DAL (src/server/auth/dal.ts), perto dos dados.
  */
 const SESSION_COOKIE = "cl_session";
-const PUBLIC_PREFIXES = ["/login", "/f/", "/form-indisponivel", "/privacidade", "/api/public", "/api/webhooks", "/api/cron"];
+const PUBLIC_PREFIXES = ["/login", "/f/", "/form-indisponivel", "/privacidade", "/esqueci-senha", "/redefinir-senha", "/api/public", "/api/webhooks", "/api/cron"];
 
 const FORM_PAGE = /^\/f\/([^/]+)\/?$/;
 
