@@ -32,7 +32,7 @@ turso db tokens create capturaleads      # → DATABASE_AUTH_TOKEN
 Com as duas variáveis no `.env` local, crie as tabelas e o primeiro admin:
 
 ```bash
-npm run db:push
+npm run db:migrate
 npm run admin:create -- voce@empresa.com "Seu Nome" "senha-forte"
 ```
 

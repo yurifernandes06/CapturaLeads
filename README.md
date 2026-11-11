@@ -113,8 +113,7 @@ O passo a passo de cada provedor e a URL do webhook aparecem em **Configuraçõe
 
 Guia completo (Vercel + Turso ou VPS, agendador do SLA, primeiro admin e backup): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
-Resumo: banco no Turso → `npm run db:push` → `npm run admin:create` → variáveis na Vercel com
-`SLA_INTERNAL_TICK=false` → agendador chamando `/api/cron/sla` (workflow `sla-cron.yml` grátis).
+Resumo: banco no Turso → `npm run db:migrate` → `npm run admin:create` → variáveis na Vercel → agendador chamando `/api/cron/sla` (workflow `sla-cron.yml` grátis).
 
 ## Scripts
 
@@ -125,8 +124,11 @@ Resumo: banco no Turso → `npm run db:push` → `npm run admin:create` → vari
 | `npm run typecheck` | Gera tipos de rota e checa TypeScript |
 | `npm run lint` | ESLint |
 | `npm test` | Testes (Vitest) |
-| `npm run db:push` | Sincroniza o schema com o banco |
+| `npm run db:generate` | Gera a migration a partir de `src/db/schema.ts` (commite a pasta `drizzle/`) |
+| `npm run db:migrate` | Aplica as migrations pendentes (dev e produção) |
+| `npm run db:baseline` | Marca a migration inicial como aplicada em bancos criados com `db:push` (uma vez) |
+| `npm run db:push` | Sincroniza o schema direto, sem migration (só protótipo local) |
 | `npm run db:studio` | Abre o Drizzle Studio |
 | `npm run db:seed` | Dados de demonstração (idempotente) |
 | `npm run admin:create -- email "Nome" senha` | Cria ou promove um admin (produção) |
-| `npm run setup` | `db:push` + `db:seed` |
+| `npm run setup` | `db:migrate` + `db:seed` |
