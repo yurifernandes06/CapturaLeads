@@ -1,16 +1,16 @@
 "use client";
 
-import { CheckCircle2Icon, Loader2Icon } from "lucide-react";
+import { CheckCircle2Icon } from "lucide-react";
 import Script from "next/script";
 import { useActionState, useEffect, useState } from "react";
 import { WhatsAppIcon } from "@/components/leads/badges";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import { whatsappLink } from "@/lib/phone";
 import { submitPublicForm } from "./actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 type FormView = {
   slug: string;
@@ -102,7 +102,7 @@ export function PublicLeadForm({
       <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance sm:text-[1.7rem]">{form.title}</h1>
       {form.description ? <p className="mt-2 text-muted-foreground text-pretty">{form.description}</p> : null}
 
-      <form action={action} className="mt-6 grid gap-4">
+      <form onSubmit={submitKeepingValues(action)} className="mt-6 grid gap-4">
         <input type="hidden" name="slug" value={form.slug} />
         {Object.entries(hidden).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
         {/* Honeypot anti-spam: invisível para pessoas */}
@@ -184,10 +184,9 @@ export function PublicLeadForm({
           .
         </p>
 
-        <Button type="submit" size="lg" className="mt-1 h-12 text-base" disabled={pending}>
-          {pending ? <Loader2Icon className="animate-spin" /> : null}
+        <SubmitButton pending={pending} size="lg" className="mt-1 h-12 text-base">
           {form.buttonText}
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   );

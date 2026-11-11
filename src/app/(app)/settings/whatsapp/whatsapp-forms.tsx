@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import type { MessageTemplate } from "@/lib/templates";
 import { saveTemplatesAction, simulateInboundAction } from "./actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 export function TemplatesEditor({ initial, readOnly }: { initial: MessageTemplate[]; readOnly: boolean }) {
   const [items, setItems] = useState(initial);
@@ -90,7 +91,7 @@ export function SimulateInbound() {
   }, { ok: false });
 
   return (
-    <form action={action} className="grid gap-3">
+    <form onSubmit={submitKeepingValues(action)} className="grid gap-3">
       <div className="grid gap-2">
         <Label htmlFor="sim-phone">Telefone de quem enviou</Label>
         <Input id="sim-phone" name="phone" defaultValue="(11) 91234-5678" required />
@@ -103,9 +104,9 @@ export function SimulateInbound() {
         <Label htmlFor="sim-text">Mensagem</Label>
         <Textarea id="sim-text" name="text" rows={3} defaultValue="Oi! Quero saber o preço do plano anual." required />
       </div>
-      <Button type="submit" disabled={pending} className="bg-whatsapp text-white hover:bg-whatsapp/90">
+      <SubmitButton pending={pending} className="bg-whatsapp text-white hover:bg-whatsapp/90">
         Simular recebimento
-      </Button>
+      </SubmitButton>
       {state.ok && state.data ? (
         <Link href={`/leads/${state.data.leadId}`} className="text-sm font-medium text-primary hover:underline">
           Abrir lead →
