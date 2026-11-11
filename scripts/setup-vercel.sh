@@ -25,12 +25,16 @@ set_env SLA_INTERNAL_TICK "false"
 set_env WHATSAPP_PROVIDER "mock"
 set_env PUBLIC_API_KEY "$(openssl rand -hex 24)"
 set_env WHATSAPP_WEBHOOK_TOKEN "$(openssl rand -hex 24)"
-if has_env CRON_SECRET; then
-  echo "• CRON_SECRET já existe (o secret do GitHub precisa ter o mesmo valor)"
+if has_env CRON_SECRET && [ -z "${ROTATE_CRON:-}" ]; then
+  echo "• CRON_SECRET já existe. Se o cron do GitHub responder 401, rode de novo com ROTATE_CRON=1."
 else
   CRON="$(openssl rand -hex 32)"
-  set_env CRON_SECRET "$CRON"
+  # GitHub primeiro: se falhar, o set -e para antes de a Vercel ficar com um valor diferente.
   printf '%s' "$CRON" | gh secret set CRON_SECRET >/dev/null && echo "✓ GitHub secret CRON_SECRET"
+  if has_env CRON_SECRET; then
+    for e in production preview; do $V env rm CRON_SECRET "$e" --yes >/dev/null 2>&1 || true; done
+  fi
+  set_env CRON_SECRET "$CRON"
   unset CRON
 fi
 printf '%s' "$APP_URL" | gh secret set APP_URL >/dev/null && echo "✓ GitHub secret APP_URL"
