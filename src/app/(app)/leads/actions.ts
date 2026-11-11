@@ -11,6 +11,7 @@ import { isValidPhone, normalizePhone } from "@/lib/phone";
 import { assertUser } from "@/server/auth/dal";
 import { assertActiveOwner, assignOwner, changeStage, createLead, findLeadByPhone, recordActivity } from "@/server/leads/service";
 import { audit } from "@/server/audit";
+import { anonymizeLead } from "@/server/leads/privacy";
 
 function revalidateLead(id?: string) {
   revalidatePath("/leads");
@@ -184,6 +185,17 @@ export async function deleteLeadAction(leadId: string): Promise<ActionResult> {
       });
     }
     revalidateLead();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorMessage(err) };
+  }
+}
+
+export async function anonymizeLeadAction(leadId: string): Promise<ActionResult> {
+  try {
+    const user = await assertUser("admin");
+    await anonymizeLead(leadId, user);
+    revalidateLead(leadId);
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorMessage(err) };

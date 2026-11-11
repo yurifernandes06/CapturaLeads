@@ -24,7 +24,7 @@ import { getSetting } from "@/server/settings";
 import { listLeadTasks, toTaskView } from "@/server/tasks";
 import { whatsapp } from "@/server/whatsapp";
 import { ActivityComposer } from "./activity-composer";
-import { DeleteLeadButton, EditLeadButton, OwnerSelect, StageControl } from "./lead-controls";
+import { AnonymizeLeadButton, DeleteLeadButton, EditLeadButton, OwnerSelect, StageControl } from "./lead-controls";
 import { LeadTasks } from "./lead-tasks";
 import { WhatsAppComposer } from "./whatsapp-composer";
 
@@ -86,6 +86,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
                   tags: lead.tags.join(", "),
                 }}
               />
+              {user.role === "admin" && !lead.anonymizedAt ? <AnonymizeLeadButton leadId={lead.id} name={lead.name} /> : null}
               {user.role === "admin" ? <DeleteLeadButton leadId={lead.id} name={lead.name} /> : null}
             </div>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
