@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import { OPEN_STAGES } from "@/lib/leads";
 import { SLA_KIND_LABEL, type SlaConfig } from "@/lib/sla/config";
 import { evaluateSla } from "@/lib/sla/engine";
-import { getSetting } from "@/server/settings";
+import { getSetting, setSetting } from "@/server/settings";
 import { remindDueTasks } from "@/server/tasks";
 import { sendSlaAlert } from "@/server/whatsapp/service";
 
@@ -35,7 +35,10 @@ export async function refreshLeadSla(leadId: string, config?: SlaConfig) {
   if (patch.slaStatus === "breached") await notifyBreach({ ...lead, ...patch }, cfg);
 }
 
-async function notifyBreach(lead: schema.Lead, config: SlaConfig) {
+/** Teto de alertas de WhatsApp por sweep: após uma parada longa, o sino avisa todos, o WhatsApp não vira enxurrada. */
+const WHATSAPP_ALERTS_PER_SWEEP = 30;
+
+async function notifyBreach(lead: schema.Lead, config: SlaConfig, budget?: { whatsapp: number }) {
   // Um alerta por ciclo: se já avisamos depois que este prazo começou, não repete.
   if (lead.slaNotifiedAt && lead.slaStartedAt && lead.slaNotifiedAt >= lead.slaStartedAt) return;
   const now = new Date();
@@ -85,7 +88,7 @@ async function notifyBreach(lead: schema.Lead, config: SlaConfig) {
     );
   }
 
-  if (config.whatsappAlerts) {
+  if (config.whatsappAlerts && (!budget || budget.whatsapp-- > 0)) {
     await sendSlaAlert(lead).catch((err) => console.error("[sla] alerta no WhatsApp falhou", err));
   }
 }
@@ -103,6 +106,7 @@ export function sweepSla() {
       const now = new Date();
       const open = await db.select().from(schema.leads).where(inArray(schema.leads.stage, OPEN_STAGES));
       let breached = 0;
+      const budget = { whatsapp: WHATSAPP_ALERTS_PER_SWEEP };
       // Só grava quem mudou, em lotes (uma ida à rede por lote no Turso).
       const updates = open
         .map((lead) => ({ lead, patch: slaPatch(lead, config, now) }))
@@ -118,7 +122,7 @@ export function sweepSla() {
         const patch = slaPatch(lead, config, now);
         if (patch.slaStatus === "breached") {
           breached++;
-          await notifyBreach({ ...lead, ...patch }, config);
+          await notifyBreach({ ...lead, ...patch }, config, budget);
         }
       }
       // Mesmo relógio, mesmo horário comercial: lembretes de tarefas vencidas.
@@ -129,6 +133,9 @@ export function sweepSla() {
       // Faxina: sessões expiradas.
       await db.delete(schema.sessions).where(lt(schema.sessions.expiresAt, now));
       lastSweepAt = Date.now();
+      await setSetting("ops", { lastSweepAt, lastSweepMs: lastSweepAt - now.getTime() }).catch((err) =>
+        console.error("[sla] falha ao registrar o sweep", err),
+      );
       return { updated, breached, reminded };
     } finally {
       sweeping = null;
