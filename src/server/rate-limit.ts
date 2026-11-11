@@ -12,8 +12,15 @@ export type RateLimitResult = { ok: boolean; retryAfterMs: number };
 
 const PREFIX = "cl:rl:";
 const buckets = new Map<string, { count: number; resetAt: number }>();
+const PRUNE_AT = 5_000;
+
+/** Remove janelas vencidas para o Map não crescer sem limite em processos longos. */
+function prune(now: number) {
+  for (const [key, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(key);
+}
 
 function memoryHit(key: string, limit: number, windowMs: number, now = Date.now()): RateLimitResult {
+  if (buckets.size >= PRUNE_AT) prune(now);
   const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
     buckets.set(key, { count: 1, resetAt: now + windowMs });

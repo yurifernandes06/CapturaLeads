@@ -35,6 +35,10 @@ const schema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
+  /** Captcha do formulário público (Cloudflare Turnstile). Opcional: liga quando as duas existem. */
+  TURNSTILE_SITE_KEY: z.string().optional(),
+  TURNSTILE_SECRET_KEY: z.string().optional(),
+
   /** Mídia do WhatsApp no Vercel Blob (store privado). Sem nenhum dos dois, grava em data/media. */
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
   BLOB_STORE_ID: z.string().optional(),
@@ -86,6 +90,9 @@ export function parseEnv(raw: RawEnv): Env {
     const problems = productionProblems(e, raw);
     if (problems.length) {
       throw new Error(`Configuração insegura para produção:\n- ${problems.join("\n- ")}`);
+    }
+    if (isVercel && !(e.UPSTASH_REDIS_REST_URL && e.UPSTASH_REDIS_REST_TOKEN)) {
+      console.warn("[env] Sem Upstash Redis na Vercel: o rate limit fica por instância e protege pouco o login e o formulário.");
     }
     if (e.WHATSAPP_PROVIDER === "mock") {
       console.warn("[env] WHATSAPP_PROVIDER=mock em produção: nenhuma mensagem real será enviada ou recebida.");
