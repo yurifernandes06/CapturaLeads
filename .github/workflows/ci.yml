@@ -27,8 +27,17 @@ jobs:
 
       - run: npm ci
 
-      - name: Banco de dados
-        run: mkdir -p data && npm run db:push
+      - name: Banco de dados (migrations)
+        run: mkdir -p data && npm run db:migrate
+
+      - name: Schema e migrations em sincronia
+        run: |
+          npx drizzle-kit generate --name drift-check
+          if [ -n "$(git status --porcelain drizzle)" ]; then
+            echo "::error::src/db/schema.ts mudou sem migration. Rode 'npm run db:generate' e commite a pasta drizzle/."
+            git status --porcelain drizzle
+            exit 1
+          fi
 
       - run: npm run lint
       - run: npm run typecheck

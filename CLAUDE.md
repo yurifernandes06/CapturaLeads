@@ -4,7 +4,9 @@
 
 ## Comandos
 - `npm run dev` / `npm run build` / `npm run typecheck` / `npm run lint` / `npm test`
-- Banco: `npm run db:push` (sincroniza schema, sem migrations), `npm run db:seed`
+- Banco: migrations versionadas em `drizzle/`. Mudou `src/db/schema.ts` → `npm run db:generate` e commite
+  a migration (o CI falha se faltar). Aplicar: `npm run db:migrate`. Banco antigo criado com push:
+  `npm run db:baseline` uma vez. `db:push` só para protótipo local. `npm run db:seed` = dados demo.
 
 ## Convenções
 - Next.js 16 com `cacheComponents: true`: leitura de cookies/DB deve ficar atrás de `<Suspense>`
