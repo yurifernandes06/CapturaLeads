@@ -13,7 +13,7 @@ import { listMyTasks, toTaskView } from "@/server/tasks";
 export const metadata: Metadata = { title: "Minhas tarefas" };
 
 const BUCKET_META: Record<TaskBucket, { icon: LucideIcon; tone: string; empty: string }> = {
-  overdue: { icon: AlarmClockIcon, tone: "text-primary", empty: "Nada atrasado." },
+  overdue: { icon: AlarmClockIcon, tone: "text-primary-text", empty: "Nada atrasado." },
   today: { icon: CalendarClockIcon, tone: "text-warning", empty: "Nada para hoje." },
   upcoming: { icon: CalendarDaysIcon, tone: "text-muted-foreground", empty: "Nenhuma tarefa agendada." },
 };

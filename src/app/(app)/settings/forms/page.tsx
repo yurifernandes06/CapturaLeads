@@ -74,7 +74,7 @@ export default async function FormsPage() {
                     href={`/f/${f.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary-text hover:underline"
                   >
                     Abrir formulário <ExternalLinkIcon className="size-3.5" />
                   </a>

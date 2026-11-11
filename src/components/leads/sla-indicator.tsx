@@ -52,7 +52,7 @@ export function SlaIndicator({
       className={cn(
         "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-xs font-medium whitespace-nowrap tabular",
         liveMeta.className,
-        live === "breached" && "animate-[pulse_2.5s_ease-in-out_infinite]",
+        live === "breached" && "motion-safe:animate-[pulse_2.5s_ease-in-out_infinite]",
       )}
     >
       {paused ? <PauseIcon className="size-3" /> : <AlarmClockIcon className="size-3" />}

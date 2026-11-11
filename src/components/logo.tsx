@@ -15,7 +15,7 @@ export function Logo({ className, compact }: { className?: string; compact?: boo
       {compact ? null : (
         <span className="grid leading-none" aria-hidden>
           <span className="font-heading text-[0.95rem] font-semibold tracking-tight">{BRAND.short}</span>
-          <span className="mt-1 font-mono text-[0.6rem] tracking-[0.32em] text-primary uppercase">{BRAND.suffix}</span>
+          <span className="mt-1 font-mono text-[0.6rem] tracking-[0.32em] text-primary-text uppercase">{BRAND.suffix}</span>
         </span>
       )}
     </span>

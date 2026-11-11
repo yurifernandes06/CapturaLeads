@@ -228,7 +228,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
               </Detail>
               <Detail icon={<MailIcon />} label="E-mail">
                 {lead.email ? (
-                  <a href={`mailto:${lead.email}`} className="hover:text-primary">
+                  <a href={`mailto:${lead.email}`} className="hover:text-primary-text">
                     {lead.email}
                   </a>
                 ) : (
@@ -283,7 +283,7 @@ export default async function LeadPage(props: PageProps<"/leads/[id]">) {
                       href={lead.landingPage}
                       target="_blank"
                       rel="noreferrer"
-                      className="block truncate text-xs text-muted-foreground hover:text-primary"
+                      className="block truncate text-xs text-muted-foreground hover:text-primary-text"
                       title={lead.landingPage}
                     >
                       {lead.landingPage.replace(/^https?:\/\//, "")}

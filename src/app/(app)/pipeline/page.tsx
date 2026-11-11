@@ -51,6 +51,7 @@ export default async function PipelinePage(props: PageProps<"/pipeline">) {
               <Link
                 key={v.value}
                 href={v.value === "all" ? "/pipeline" : `/pipeline?owner=${v.value}`}
+                aria-current={view === v.value ? "page" : undefined}
                 className={cn(
                   "rounded-md px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
                   view === v.value && "bg-secondary text-foreground",

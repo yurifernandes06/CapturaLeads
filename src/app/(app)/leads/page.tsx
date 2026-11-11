@@ -83,7 +83,7 @@ export default async function LeadsPage(props: PageProps<"/leads">) {
                     <Link href={`/leads/${lead.id}`} className="after:absolute after:inset-0 focus-visible:outline-none">
                       <div className="flex items-center gap-2">
                         <PriorityBadge priority={lead.priority} showLabel={false} />
-                        <span className="truncate font-medium group-hover:text-primary">{lead.name}</span>
+                        <span className="truncate font-medium group-hover:text-primary-text">{lead.name}</span>
                       </div>
                       {lead.company ? <div className="truncate pl-5.5 text-xs text-muted-foreground">{lead.company}</div> : null}
                     </Link>

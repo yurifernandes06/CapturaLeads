@@ -155,7 +155,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             <CardTitle>Atender agora</CardTitle>
             <CardDescription>Leads abertos ordenados pela urgência do SLA.</CardDescription>
             <CardAction>
-              <Link href={`/leads?stage=open&sort=sla${ownerParam}`} className="text-sm font-medium text-primary hover:underline">
+              <Link href={`/leads?stage=open&sort=sla${ownerParam}`} className="text-sm font-medium text-primary-text hover:underline">
                 Ver fila →
               </Link>
             </CardAction>
@@ -216,7 +216,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
                 {dueCount ? `${dueCount} para hoje ou atrasadas.` : "Nada vencendo hoje."}
               </CardDescription>
               <CardAction>
-                <Link href="/tasks" className="text-sm font-medium text-primary hover:underline">
+                <Link href="/tasks" className="text-sm font-medium text-primary-text hover:underline">
                   Ver todas →
                 </Link>
               </CardAction>

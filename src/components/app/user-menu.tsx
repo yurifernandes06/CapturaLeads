@@ -37,7 +37,7 @@ export function UserMenu({ user }: { user: { name: string; email: string; role: 
           <DropdownMenuLabel className="font-normal">
             <div className="truncate text-sm font-medium text-foreground">{user.name}</div>
             <div className="truncate text-xs text-muted-foreground">{user.email}</div>
-            <div className="mt-1.5 eyebrow text-primary">{user.role === "admin" ? "Administrador" : "Vendedor"}</div>
+            <div className="mt-1.5 eyebrow text-primary-text">{user.role === "admin" ? "Administrador" : "Vendedor"}</div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

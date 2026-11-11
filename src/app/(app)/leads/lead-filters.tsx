@@ -94,6 +94,7 @@ export function LeadFiltersBar({ filters, owners, tags }: { filters: LeadFilters
           <button
             key={view.label}
             type="button"
+            aria-pressed={isView(view.filters)}
             onClick={() => apply({ ...view.filters, q: filters.q, sort: filters.sort })}
             className={cn(
               "h-7 rounded-md border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
