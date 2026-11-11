@@ -3,7 +3,6 @@
 import { FlameIcon, SnowflakeIcon, ThermometerIcon } from "lucide-react";
 import { useActionState, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +16,7 @@ import type { SlaConfig } from "@/lib/sla/config";
 import { upcomingHolidays } from "@/lib/sla/holidays";
 import { cn } from "@/lib/utils";
 import { saveSlaConfig } from "./actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const TIMEZONES = [
@@ -47,7 +47,7 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
     setDraft((d) => ({ ...d, firstResponseMinutes: { ...d.firstResponseMinutes, [key]: v } }));
 
   return (
-    <form action={action} className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <form onSubmit={submitKeepingValues(action)} className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <fieldset disabled={readOnly || pending} className="grid gap-6">
         {readOnly ? (
           <p className="rounded-lg border bg-black/30 px-4 py-3 text-sm text-muted-foreground">
@@ -245,9 +245,9 @@ export function SlaForm({ config, readOnly }: { config: SlaConfig; readOnly: boo
         ) : null}
         {!readOnly ? (
           <div>
-            <Button type="submit" size="lg">
+            <SubmitButton pending={pending} size="lg">
               Salvar regras de SLA
-            </Button>
+            </SubmitButton>
           </div>
         ) : null}
       </fieldset>

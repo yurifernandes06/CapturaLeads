@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { ActionResult } from "@/lib/action-result";
 import { createTaskAction } from "../../tasks/actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 /** Card "Tarefas" do detalhe do lead: lista + criação rápida. */
 export function LeadTasks({
@@ -42,7 +43,7 @@ export function LeadTasks({
       <TaskList items={tasks} empty={adding ? undefined : "Nenhuma tarefa para este lead."} />
 
       {adding ? (
-        <form ref={formRef} action={action} className="grid gap-2 rounded-lg border bg-muted/30 p-2.5">
+        <form ref={formRef} onSubmit={submitKeepingValues(action)} className="grid gap-2 rounded-lg border bg-muted/30 p-2.5">
           <input type="hidden" name="leadId" value={leadId} />
           <Input name="title" required maxLength={200} placeholder="Ex.: Ligar para apresentar a proposta" autoFocus />
           <div className="grid grid-cols-2 gap-2">
@@ -60,9 +61,9 @@ export function LeadTasks({
             <Button type="button" variant="ghost" size="sm" onClick={() => setAdding(false)}>
               Cancelar
             </Button>
-            <Button type="submit" size="sm" disabled={pending}>
+            <SubmitButton pending={pending} size="sm">
               Criar tarefa
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       ) : (

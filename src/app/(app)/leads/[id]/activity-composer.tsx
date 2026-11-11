@@ -3,11 +3,11 @@
 import { PhoneIcon, StickyNoteIcon } from "lucide-react";
 import { useActionState, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 import { addActivityAction } from "../actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 type Tab = { id: string; label: string; icon: ReactNode };
 
@@ -64,7 +64,7 @@ export function ActivityComposer({
       {extra ? (
         <div className="p-3">{extra.content}</div>
       ) : (
-        <form ref={formRef} action={action} className="grid gap-2 p-3">
+        <form ref={formRef} onSubmit={submitKeepingValues(action)} className="grid gap-2 p-3">
           <input type="hidden" name="leadId" value={leadId} />
           <input type="hidden" name="type" value={tab} />
           <Textarea
@@ -81,9 +81,9 @@ export function ActivityComposer({
             <span className="text-xs text-muted-foreground">
               {state.error ? <span className="text-destructive">{state.error}</span> : "Ctrl + Enter para salvar"}
             </span>
-            <Button type="submit" size="sm" disabled={pending}>
+            <SubmitButton pending={pending} size="sm">
               {tab === "call" ? "Registrar ligação" : "Salvar nota"}
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       )}

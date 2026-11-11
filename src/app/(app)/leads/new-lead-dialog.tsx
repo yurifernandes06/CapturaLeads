@@ -20,6 +20,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import { createLeadAction } from "./actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 type Result = ActionResult<{ id: string; created: boolean }>;
 
@@ -53,7 +54,7 @@ export function NewLeadDialog({
           <DialogTitle>Novo lead</DialogTitle>
           <DialogDescription>Telefones repetidos não duplicam: o lead existente é reaproveitado.</DialogDescription>
         </DialogHeader>
-        <form action={action} className="grid gap-4">
+        <form onSubmit={submitKeepingValues(action)} className="grid gap-4">
           <LeadFormFields />
           <div className="grid gap-2">
             <Label htmlFor="lead-owner">Responsável</Label>
@@ -75,10 +76,10 @@ export function NewLeadDialog({
               {state.error}
             </p>
           ) : null}
-          <DialogFooter>
-            <Button type="submit" disabled={pending}>
+          <DialogFooter showCloseButton>
+            <SubmitButton pending={pending}>
               Cadastrar lead
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

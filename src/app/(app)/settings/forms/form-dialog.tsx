@@ -24,6 +24,7 @@ import type { Form } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
 import { PRIORITIES, PRIORITY_META } from "@/lib/leads";
 import { saveFormAction, setFormActiveAction } from "./actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 export function FormDialog({ form }: { form?: Form }) {
   const [open, setOpen] = useState(false);
@@ -52,7 +53,7 @@ export function FormDialog({ form }: { form?: Form }) {
           <DialogTitle>{form ? "Editar formulário" : "Novo formulário"}</DialogTitle>
           <DialogDescription>Nome, telefone e mensagem são sempre pedidos. E-mail e empresa são opcionais.</DialogDescription>
         </DialogHeader>
-        <form action={action} className="grid gap-4">
+        <form onSubmit={submitKeepingValues(action)} className="grid gap-4">
           {form ? <input type="hidden" name="id" value={form.id} /> : null}
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Nome interno" htmlFor="ff-name">
@@ -138,10 +139,10 @@ export function FormDialog({ form }: { form?: Form }) {
               {state.error}
             </p>
           ) : null}
-          <DialogFooter>
-            <Button type="submit" disabled={pending}>
+          <DialogFooter showCloseButton>
+            <SubmitButton pending={pending}>
               Salvar
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

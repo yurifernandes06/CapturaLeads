@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { ActionResult } from "@/lib/action-result";
 import { createUser, resetPassword, setUserActive, setUserRole } from "./actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 function FormError({ state }: { state: ActionResult }) {
   if (!state.error) return null;
@@ -56,7 +57,7 @@ export function CreateUserDialog() {
           <DialogTitle>Novo usuário</DialogTitle>
           <DialogDescription>O acesso é liberado na hora com a senha definida aqui.</DialogDescription>
         </DialogHeader>
-        <form action={action} className="grid gap-4">
+        <form onSubmit={submitKeepingValues(action)} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Nome</Label>
             <Input id="name" name="name" required />
@@ -83,10 +84,10 @@ export function CreateUserDialog() {
             <Input id="password" name="password" type="password" minLength={8} required />
           </div>
           <FormError state={state} />
-          <DialogFooter>
-            <Button type="submit" disabled={pending}>
+          <DialogFooter showCloseButton>
+            <SubmitButton pending={pending}>
               Criar usuário
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -100,11 +101,19 @@ export function UserRowActions({ user }: { user: RowUser }) {
   const [pending, startTransition] = useTransition();
   const [resetOpen, setResetOpen] = useState(false);
 
-  const run = (fn: () => Promise<ActionResult>, success: string) =>
+  /** Executa e oferece "Desfazer" por alguns segundos quando a ação tem volta. */
+  const run = (fn: () => Promise<ActionResult>, success: string, undo?: () => Promise<ActionResult>) =>
     startTransition(async () => {
       const res = await fn();
-      if (res.ok) toast.success(success);
-      else toast.error(res.error);
+      if (!res.ok) return void toast.error(res.error);
+      toast.success(success, {
+        action: undo
+          ? {
+              label: "Desfazer",
+              onClick: () => run(undo, "Alteração desfeita."),
+            }
+          : undefined,
+      });
     });
 
   return (
@@ -124,6 +133,7 @@ export function UserRowActions({ user }: { user: RowUser }) {
               run(
                 () => setUserRole(user.id, user.role === "admin" ? "sales" : "admin"),
                 "Papel atualizado.",
+                () => setUserRole(user.id, user.role),
               )
             }
           >
@@ -131,7 +141,7 @@ export function UserRowActions({ user }: { user: RowUser }) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {user.active ? (
-            <DropdownMenuItem variant="destructive" onClick={() => run(() => setUserActive(user.id, false), "Usuário desativado.")}>
+            <DropdownMenuItem variant="destructive" onClick={() => run(() => setUserActive(user.id, false), "Usuário desativado.", () => setUserActive(user.id, true))}>
               <UserXIcon /> Desativar
             </DropdownMenuItem>
           ) : (
@@ -171,17 +181,17 @@ function ResetPasswordDialog({
           <DialogTitle>Redefinir senha</DialogTitle>
           <DialogDescription>{user.name} vai precisar entrar de novo.</DialogDescription>
         </DialogHeader>
-        <form action={action} className="grid gap-4">
+        <form onSubmit={submitKeepingValues(action)} className="grid gap-4">
           <input type="hidden" name="userId" value={user.id} />
           <div className="grid gap-2">
             <Label htmlFor={`pw-${user.id}`}>Nova senha</Label>
             <Input id={`pw-${user.id}`} name="password" type="password" minLength={8} required />
           </div>
           <FormError state={state} />
-          <DialogFooter>
-            <Button type="submit" disabled={pending}>
+          <DialogFooter showCloseButton>
+            <SubmitButton pending={pending}>
               Salvar senha
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -10,7 +10,6 @@ import { LeadFormFields, type LeadFormDefaults } from "@/components/leads/lead-f
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -27,6 +26,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import type { ActionResult } from "@/lib/action-result";
 import { OPEN_STAGES, STAGES, type Stage } from "@/lib/leads";
 import { anonymizeLeadAction, assignOwnerAction, deleteLeadAction, moveStageAction, updateLeadAction } from "../actions";
+import { SubmitButton, submitKeepingValues } from "@/components/app/submit-button";
 
 function useAction() {
   const [pending, startTransition] = useTransition();
@@ -153,7 +153,7 @@ export function EditLeadButton({ leadId, defaults }: { leadId: string; defaults:
           <DialogHeader>
             <DialogTitle>Editar lead</DialogTitle>
           </DialogHeader>
-          <form action={action} className="grid gap-4">
+          <form onSubmit={submitKeepingValues(action)} className="grid gap-4">
             <input type="hidden" name="id" value={leadId} />
             <LeadFormFields defaults={defaults} />
             {state.error ? (
@@ -161,10 +161,10 @@ export function EditLeadButton({ leadId, defaults }: { leadId: string; defaults:
                 {state.error}
               </p>
             ) : null}
-            <DialogFooter>
-              <Button type="submit" disabled={pending}>
+            <DialogFooter showCloseButton>
+              <SubmitButton pending={pending}>
                 Salvar
-              </Button>
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -190,7 +190,7 @@ export function DeleteLeadButton({ leadId, name }: { leadId: string; name: strin
               &quot;{name}&quot; e todo o histórico serão apagados. Isso não pode ser desfeito.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter showCloseButton>
             <Button
               variant="destructive"
               disabled={pending}
@@ -230,8 +230,7 @@ export function AnonymizeLeadButton({ leadId, name }: { leadId: string; name: st
               serão apagados; etapa, origem e valor ficam para as métricas. Isso não pode ser desfeito.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
+          <DialogFooter showCloseButton>
             <Button
               variant="destructive"
               disabled={pending}
