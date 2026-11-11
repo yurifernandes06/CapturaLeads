@@ -51,9 +51,10 @@ npm run admin:create -- voce@empresa.com "Seu Nome" "senha-forte"
 | `CRON_SECRET` | sim | `openssl rand -hex 32` |
 | `SLA_INTERNAL_TICK` | não | padrão: desligado na Vercel, ligado em VPS |
 | `PUBLIC_API_KEY` | se usar a API | `openssl rand -hex 24` |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Vercel | rate limit compartilhado (login e formulário). Sem ele o boot avisa |
+| `TURNSTILE_SITE_KEY` / `_SECRET_KEY` | recomendado | captcha do formulário público (Cloudflare Turnstile, grátis) |
 | `WHATSAPP_PROVIDER` e variáveis do provedor | sim | ver README → Configuração do WhatsApp |
 | `WHATSAPP_WEBHOOK_TOKEN` | Evolution | token na query do webhook |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | não | rate limit compartilhado entre instâncias |
 | `BLOB_READ_WRITE_TOKEN` ou `BLOB_STORE_ID` | Vercel | mídia do WhatsApp em store **privado** do Vercel Blob; sem isso grava em `data/media` (só VPS) |
 
 ## 3a. Vercel
