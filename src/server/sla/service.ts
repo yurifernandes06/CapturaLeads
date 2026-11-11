@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, lt } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { OPEN_STAGES } from "@/lib/leads";
 import { SLA_KIND_LABEL, type SlaConfig } from "@/lib/sla/config";
@@ -39,7 +39,19 @@ async function notifyBreach(lead: schema.Lead, config: SlaConfig) {
   // Um alerta por ciclo: se já avisamos depois que este prazo começou, não repete.
   if (lead.slaNotifiedAt && lead.slaStartedAt && lead.slaNotifiedAt >= lead.slaStartedAt) return;
   const now = new Date();
-  await db.update(schema.leads).set({ slaNotifiedAt: now }).where(eq(schema.leads.id, lead.id));
+  // UPDATE condicional: com sweeps simultâneos (cron + render + tick), só um deles alerta.
+  const l = schema.leads;
+  const claimed = await db
+    .update(l)
+    .set({ slaNotifiedAt: now })
+    .where(
+      and(
+        eq(l.id, lead.id),
+        or(isNull(l.slaNotifiedAt), isNull(l.slaStartedAt), sql`${l.slaNotifiedAt} < ${l.slaStartedAt}`),
+      ),
+    )
+    .returning({ id: l.id });
+  if (!claimed.length) return;
 
   const label = lead.slaKind ? SLA_KIND_LABEL[lead.slaKind] : "SLA";
   await db.insert(schema.activities).values({

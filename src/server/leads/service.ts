@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { OUTBOUND_ACTIVITIES, isClosedStage, type ActivityType, type Priority, type Source, type Stage } from "@/lib/leads";
 import { normalizePhone, phoneVariants } from "@/lib/phone";
@@ -44,15 +44,28 @@ export async function findLeadByPhone(phone: string) {
 
 /** Round-robin: vendedor ativo que recebeu lead há mais tempo. Sem vendedores, cai para admins. */
 export async function pickNextOwner(): Promise<string | null> {
-  const candidates = await db
-    .select({ id: schema.users.id, role: schema.users.role })
-    .from(schema.users)
-    .where(eq(schema.users.active, true))
-    .orderBy(sql`${schema.users.lastAssignedAt} is not null`, asc(schema.users.lastAssignedAt));
-  const next = candidates.find((u) => u.role === "sales") ?? candidates[0];
-  if (!next) return null;
-  await db.update(schema.users).set({ lastAssignedAt: new Date() }).where(eq(schema.users.id, next.id));
-  return next.id;
+  // Compare-and-set: se outro lead simultâneo pegou o mesmo vendedor, tenta o próximo da fila.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const candidates = await db
+      .select({ id: schema.users.id, role: schema.users.role, lastAssignedAt: schema.users.lastAssignedAt })
+      .from(schema.users)
+      .where(eq(schema.users.active, true))
+      .orderBy(sql`${schema.users.lastAssignedAt} is not null`, asc(schema.users.lastAssignedAt));
+    const next = candidates.find((u) => u.role === "sales") ?? candidates[0];
+    if (!next) return null;
+    const claimed = await db
+      .update(schema.users)
+      .set({ lastAssignedAt: new Date() })
+      .where(
+        and(
+          eq(schema.users.id, next.id),
+          next.lastAssignedAt ? eq(schema.users.lastAssignedAt, next.lastAssignedAt) : isNull(schema.users.lastAssignedAt),
+        ),
+      )
+      .returning({ id: schema.users.id });
+    if (claimed.length) return next.id;
+  }
+  return null;
 }
 
 export type CreateLeadResult = { lead: schema.Lead; created: boolean };
@@ -68,17 +81,19 @@ export async function createLead(
   const phone = input.phone ? normalizePhone(input.phone) || null : null;
   const now = new Date();
 
+  const repeatContact = async (existing: schema.Lead): Promise<CreateLeadResult> => {
+    await recordActivity(existing.id, "system", {
+      userId: opts.actorId,
+      body: `Novo contato recebido via ${input.source}${input.message ? `: "${input.message}"` : ""}`,
+      meta: { source: input.source, utmCampaign: input.utmCampaign ?? null },
+      inbound: opts.inbound,
+    });
+    return { lead: existing, created: false };
+  };
+
   if (phone) {
     const existing = await findLeadByPhone(phone);
-    if (existing) {
-      await recordActivity(existing.id, "system", {
-        userId: opts.actorId,
-        body: `Novo contato recebido via ${input.source}${input.message ? `: "${input.message}"` : ""}`,
-        meta: { source: input.source, utmCampaign: input.utmCampaign ?? null },
-        inbound: opts.inbound,
-      });
-      return { lead: existing, created: false };
-    }
+    if (existing) return repeatContact(existing);
   }
 
   const ownerId = input.ownerId ?? (opts.autoAssign ? await pickNextOwner() : null);
@@ -107,10 +122,18 @@ export async function createLead(
       lastInboundAt: opts.inbound ? now : null,
       createdAt: now,
     })
+    // Corrida: outro request criou o mesmo telefone entre a busca e o insert.
+    .onConflictDoNothing({ target: schema.leads.phone })
     .returning();
 
+  if (!lead) {
+    const existing = phone ? await findLeadByPhone(phone) : undefined;
+    if (!existing) throw new Error("Não foi possível criar o lead.");
+    return repeatContact(existing);
+  }
+
   await db.insert(schema.activities).values({
-    leadId: lead!.id,
+    leadId: lead.id,
     userId: opts.actorId ?? null,
     type: "created",
     body: input.message ?? null,
@@ -118,8 +141,8 @@ export async function createLead(
     createdAt: now,
   });
 
-  await refreshLeadSla(lead!.id);
-  return { lead: lead!, created: true };
+  await refreshLeadSla(lead.id);
+  return { lead, created: true };
 }
 
 /**
@@ -144,7 +167,15 @@ export async function recordActivity(
   const at = opts.at ?? new Date();
   const [activity] = await db
     .insert(schema.activities)
-    .values({ leadId, userId: opts.userId ?? null, type, body: opts.body ?? null, meta: opts.meta, createdAt: at })
+    .values({
+      leadId,
+      userId: opts.userId ?? null,
+      type,
+      body: opts.body ?? null,
+      meta: opts.meta,
+      providerMessageId: typeof opts.meta?.providerMessageId === "string" ? opts.meta.providerMessageId : null,
+      createdAt: at,
+    })
     .returning();
 
   const patch: Partial<schema.Lead> = {};

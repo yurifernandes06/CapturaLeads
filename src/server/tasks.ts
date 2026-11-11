@@ -137,7 +137,7 @@ export async function remindDueTasks(config: SlaConfig, now = Date.now()) {
     const { task } = row;
     if (isStaleReminder(task.dueAt.getTime(), now)) {
       // Backlog antigo: marca sem avisar, para não disparar uma enxurrada de lembretes.
-      await db.update(t).set({ remindedAt: new Date(now) }).where(eq(t.id, task.id));
+      await db.update(t).set({ remindedAt: new Date(now) }).where(and(eq(t.id, task.id), isNull(t.remindedAt)));
       continue;
     }
     const ok = shouldRemind(
@@ -146,7 +146,13 @@ export async function remindDueTasks(config: SlaConfig, now = Date.now()) {
       config,
     );
     if (!ok) continue;
-    await db.update(t).set({ remindedAt: new Date(now) }).where(eq(t.id, task.id));
+    // Só quem marcar primeiro avisa: evita lembrete duplicado com sweeps simultâneos.
+    const claimed = await db
+      .update(t)
+      .set({ remindedAt: new Date(now) })
+      .where(and(eq(t.id, task.id), isNull(t.remindedAt)))
+      .returning({ id: t.id });
+    if (!claimed.length) continue;
     if (!row.active) continue;
     reminded++;
     await db.insert(schema.notifications).values({
