@@ -30,6 +30,7 @@ export type NewLeadInput = {
   referrer?: string | null;
   landingPage?: string | null;
   formId?: string | null;
+  privacyNoticeAt?: Date | null;
 };
 
 export async function findLeadByPhone(phone: string) {
@@ -125,6 +126,7 @@ export async function createLead(
         referrer: input.referrer ?? null,
         landingPage: input.landingPage ?? null,
         formId: input.formId ?? null,
+        privacyNoticeAt: input.privacyNoticeAt ?? null,
         lastInboundAt: opts.inbound ? now : null,
         createdAt: now,
       })

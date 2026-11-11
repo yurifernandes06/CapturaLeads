@@ -90,6 +90,8 @@ export async function captureLead(
       referrer: input.referrer,
       landingPage: input.landing_page,
       formId: form?.id,
+      // O formulário público sempre mostra o aviso de privacidade antes do envio.
+      privacyNoticeAt: source === "form" ? new Date() : null,
     },
     { autoAssign: true, inbound: true },
   );
