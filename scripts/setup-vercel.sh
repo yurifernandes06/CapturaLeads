@@ -43,8 +43,10 @@ set -a; . "$TMP"; set +a
 : "${TURSO_DATABASE_URL:?TURSO_DATABASE_URL não encontrado — a integração Turso está conectada ao projeto?}"
 # Exporta explicitamente: o .env local (banco de dev) não pode ganhar daqui.
 export DATABASE_URL="$TURSO_DATABASE_URL" DATABASE_AUTH_TOKEN="${TURSO_AUTH_TOKEN:-}"
-npx drizzle-kit push
-echo "✓ tabelas criadas/atualizadas"
+# Bancos criados antes das migrations (db:push) recebem o baseline; o script é idempotente.
+npx tsx scripts/db-baseline.ts
+npx drizzle-kit migrate
+echo "✓ migrations aplicadas"
 
 if [ -n "$ADMIN_EMAIL" ]; then
   read -r -s -p "Senha do admin $ADMIN_EMAIL (mín. 8 caracteres): " PASS; echo
